@@ -1,0 +1,126 @@
+
+> lahtokohta@0.1.0 dev
+> next dev
+
+??Next.js 16.1.1 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://172.31.240.1:3000
+- Environments: .env
+
+??Starting...
+??Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\lovez\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\lovez\OneDrive\臾몄꽌\Lahtokohta\package-lock.json
+
+??Turbopack's filesystem cache has been deleted because we previously detected an internal error in Turbopack. Builds or page loads may be slower as a result.
+??Ready in 2.1s
+ GET / 200 in 2.7s (compile: 2.4s, render: 302ms)
+
+thread 'tokio-runtime-worker' (36580) panicked at turbopack\crates\turbopack-core\src\ident.rs:352:34:
+byte index 11 is not a char boundary; it is inside '臾? (bytes 9..12) of `OneDrive_臾몄꽌_Lahtokohta__next-internal_server_app_api_auth_signup_route_actions_5c14b70d`
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+-----
+FATAL: An unexpected Turbopack error occurred. A panic log has been written to C:\Users\lovez\AppData\Local\Temp\next-panic-a8d646a20ae0138d109473b25f4ae31b.log.
+
+To help make Turbopack better, report this error by clicking here.
+-----
+
+ POST /api/auth/signup 500 in 1610ms (compile: 1339ms, render: 271ms)
+
+thread 'tokio-runtime-worker' (31304) panicked at turbopack\crates\turbopack-core\src\ident.rs:352:34:
+byte index 10 is not a char boundary; it is inside '臾? (bytes 9..12) of `OneDrive_臾몄꽌_Lahtokohta__next-internal_server_app_api_auth_login_route_actions_152bb9e6`
+
+-----
+FATAL: An unexpected Turbopack error occurred. A panic log has been written to C:\Users\lovez\AppData\Local\Temp\next-panic-a8d646a20ae0138d109473b25f4ae31b.log.
+
+To help make Turbopack better, report this error by clicking here.
+-----
+
+ POST /api/auth/login 500 in 426ms (compile: 412ms, render: 15ms)
+ GET / 200 in 412ms (compile: 158ms, render: 254ms)
+ GET / 200 in 101ms (compile: 6ms, render: 95ms)
+ GET / 200 in 115ms (compile: 9ms, render: 106ms)
+ GET / 200 in 104ms (compile: 9ms, render: 96ms)
+ GET / 200 in 111ms (compile: 6ms, render: 104ms)
+ GET / 200 in 114ms (compile: 8ms, render: 106ms)
+ GET / 200 in 77ms (compile: 8ms, render: 69ms)
+ GET / 200 in 127ms (compile: 7ms, render: 120ms)
+ GET / 200 in 135ms (compile: 6ms, render: 129ms)
+ GET / 200 in 132ms (compile: 11ms, render: 121ms)
+ GET / 200 in 114ms (compile: 10ms, render: 104ms)
+ GET / 200 in 100ms (compile: 8ms, render: 91ms)
+ GET / 200 in 93ms (compile: 7ms, render: 86ms)
+ GET / 200 in 84ms (compile: 6ms, render: 78ms)
+ GET / 200 in 54ms (compile: 6ms, render: 48ms)
+ GET / 200 in 25ms (compile: 4ms, render: 20ms)
+
+thread 'tokio-runtime-worker' (37564) panicked at turbopack\crates\turbopack-core\src\ident.rs:352:34:
+byte index 11 is not a char boundary; it is inside '臾? (bytes 9..12) of `OneDrive_臾몄꽌_Lahtokohta__next-internal_server_app_api_user_signup_route_actions_ed3e0aaa`
+
+-----
+FATAL: An unexpected Turbopack error occurred. A panic log has been written to C:\Users\lovez\AppData\Local\Temp\next-panic-a8d646a20ae0138d109473b25f4ae31b.log.
+
+To help make Turbopack better, report this error by clicking here.
+-----
+
+ POST /api/user/signup 500 in 193ms (compile: 178ms, render: 16ms)
+ GET / 200 in 356ms (compile: 181ms, render: 176ms)
+ GET / 200 in 123ms (compile: 8ms, render: 115ms)
+ GET / 200 in 103ms (compile: 5ms, render: 98ms)
+ GET / 200 in 103ms (compile: 6ms, render: 97ms)
+ GET / 200 in 102ms (compile: 6ms, render: 97ms)
+ GET / 200 in 97ms (compile: 6ms, render: 92ms)
+ GET / 200 in 101ms (compile: 6ms, render: 95ms)
+ GET / 200 in 105ms (compile: 5ms, render: 99ms)
+ GET / 200 in 108ms (compile: 5ms, render: 104ms)
+ GET / 200 in 101ms (compile: 6ms, render: 94ms)
+ GET / 200 in 101ms (compile: 5ms, render: 95ms)
+ GET / 200 in 98ms (compile: 5ms, render: 93ms)
+ GET / 200 in 97ms (compile: 5ms, render: 92ms)
+ GET / 200 in 61ms (compile: 5ms, render: 56ms)
+ GET / 200 in 33ms (compile: 5ms, render: 29ms)
+ POST /api/signup 200 in 308ms (compile: 282ms, render: 26ms)
+API Hit: /api/signup
+ POST /api/signup 201 in 697ms (compile: 392ms, render: 305ms)
+ GET / 200 in 195ms (compile: 85ms, render: 109ms)
+ GET / 200 in 84ms (compile: 5ms, render: 79ms)
+ GET / 200 in 79ms (compile: 5ms, render: 74ms)
+ GET / 200 in 80ms (compile: 6ms, render: 74ms)
+ GET / 200 in 77ms (compile: 3ms, render: 74ms)
+ GET / 200 in 80ms (compile: 5ms, render: 74ms)
+ GET / 200 in 90ms (compile: 3ms, render: 87ms)
+ GET / 200 in 101ms (compile: 5ms, render: 97ms)
+ GET / 200 in 108ms (compile: 5ms, render: 103ms)
+ GET / 200 in 97ms (compile: 7ms, render: 90ms)
+ GET / 200 in 92ms (compile: 5ms, render: 87ms)
+ GET / 200 in 92ms (compile: 6ms, render: 86ms)
+ GET / 200 in 88ms (compile: 5ms, render: 83ms)
+ GET / 200 in 58ms (compile: 5ms, render: 54ms)
+ GET / 200 in 32ms (compile: 7ms, render: 25ms)
+??Compiled in 58ms
+??Compiled in 12ms
+ POST /api/login 401 in 822ms (compile: 629ms, render: 194ms)
+ GET / 200 in 429ms (compile: 255ms, render: 174ms)
+ GET / 200 in 38ms (compile: 8ms, render: 31ms)
+ GET / 200 in 105ms (compile: 5ms, render: 99ms)
+ GET / 200 in 100ms (compile: 5ms, render: 95ms)
+ GET / 200 in 106ms (compile: 5ms, render: 101ms)
+ GET / 200 in 103ms (compile: 6ms, render: 97ms)
+ GET / 200 in 102ms (compile: 6ms, render: 95ms)
+ GET / 200 in 99ms (compile: 8ms, render: 91ms)
+ GET / 200 in 102ms (compile: 4ms, render: 98ms)
+ GET / 200 in 106ms (compile: 6ms, render: 101ms)
+ GET / 200 in 120ms (compile: 6ms, render: 114ms)
+ GET / 200 in 118ms (compile: 7ms, render: 112ms)
+ GET / 200 in 80ms (compile: 10ms, render: 70ms)
+ GET / 200 in 36ms (compile: 6ms, render: 30ms)
+ GET / 200 in 406ms (compile: 27ms, render: 379ms)
+API Hit: /api/signup
+ POST /api/signup 201 in 423ms (compile: 175ms, render: 248ms)
+ POST /api/login 200 in 280ms (compile: 82ms, render: 198ms)
+ GET /dashboard 200 in 1931ms (compile: 1801ms, render: 130ms)
+
