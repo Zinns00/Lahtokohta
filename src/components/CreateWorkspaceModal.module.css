@@ -470,7 +470,6 @@ input:checked+.slider:before {
 .calendarWrapper :global(.react-datepicker__day--keyboard-selected) {
     background-color: transparent !important;
     color: inherit;
-    /* Optional: visible border for accessibility if needed, else transparent */
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -502,10 +501,13 @@ input:checked+.slider:before {
     height: 8px;
 }
 
+/* Today Style - White text only, no blue to avoid confusion */
 .calendarWrapper :global(.react-datepicker__day--today) {
     position: relative;
-    font-weight: 700;
-    color: #60a5fa;
+    font-weight: 800;
+    /* Extra bold */
+    color: #fff;
+    /* Removed blue color */
 }
 
 
