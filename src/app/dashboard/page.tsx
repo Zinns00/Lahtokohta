@@ -129,7 +129,7 @@ export default function DashboardPage() {
             >
                 <div className={styles.logo} style={{ gap: '12px' }}>
                     <img src="/latokohta_logo.png" alt="Logo" style={{ width: '54px', height: '54px', mixBlendMode: 'multiply' }} />
-                    Lahtokohta
+                    Lähtökohta
                 </div>
 
                 <div className={styles.profileSection}>
