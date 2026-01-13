@@ -203,6 +203,21 @@
     text-decoration: none;
 }
 
+/* Success View Styles */
+.successView {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+    gap: 20px;
+}
+
+.successText {
+    font-size: 1rem;
+    color: #666;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;

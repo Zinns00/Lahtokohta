@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { prisma } from '@/lib/prisma'; // Use Prisma
 import { jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
+import { getUserLevelInfo } from '@/lib/levelSystem';
 
 const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-change-this');
 
@@ -27,12 +28,17 @@ export async function GET(req: Request) {
             );
         }
 
-        // Optional: Fetch fresh user data from DB to ensure user still exists
-        // simplified query for now
-        const result = await db.query('SELECT id, username, email, "createdAt" FROM "User" WHERE id = $1', [
-            payload.userId,
-        ]);
-        const user = result.rows[0];
+        // Fetch user with Prisma
+        const user = await prisma.user.findUnique({
+            where: { id: payload.userId as string },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                totalXP: true,
+                // Add any other fields you need
+            }
+        });
 
         if (!user) {
             return NextResponse.json(
@@ -41,7 +47,15 @@ export async function GET(req: Request) {
             );
         }
 
-        return NextResponse.json({ user });
+        // Calculate Level Info
+        const levelInfo = getUserLevelInfo(user.totalXP || 0);
+
+        return NextResponse.json({
+            user: {
+                ...user,
+                levelInfo // Inject calculated level data
+            }
+        });
     } catch (error) {
         console.error('Auth Check Error:', error);
         return NextResponse.json(

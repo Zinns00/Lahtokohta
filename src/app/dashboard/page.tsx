@@ -30,20 +30,30 @@ const itemVariants: Variants = {
     }
 };
 
+interface LevelInfo {
+    level: number;
+    title: string;
+    badge: string;
+    nextLevelXP: number;
+    progress: number;
+}
+
 interface User {
     id: string;
     username: string;
     email: string;
+    levelInfo?: LevelInfo;
 }
 
 interface Workspace {
     id: number;
     title: string;
-    category: string;
     description: string;
-    color: string; // 'bronze' | 'silver' | 'gold' | ...
-    progress: number;
+    category: string;
+    difficulty: string; // 'Easy' | 'Normal' | 'Hard'
     level: number;
+    progress: number;
+    color: string;
     created_at: string;
 }
 
@@ -61,8 +71,10 @@ export default function DashboardPage() {
                 const data = await res.json();
                 const mapped = data.map((ws: any) => ({
                     ...ws,
-                    progress: ws.progress || 0,
+                    progress: ws.progress || 0, // Should come from DB logic later
                     level: ws.level || 1,
+                    // Map difficulty/level to color logic if needed, or keep existing
+                    color: ws.color || 'bronze'
                 }));
                 setWorkspaces(mapped);
             }
@@ -136,7 +148,12 @@ export default function DashboardPage() {
                     <div className={styles.userProfile}>
                         <div className={styles.userInfo}>
                             <span className={styles.userName}>{user?.username || '게스트'}</span>
-                            <span className={styles.userTitle}>Lv.3 탐험가</span>
+                            <span className={styles.userTitle}>
+                                {user?.levelInfo
+                                    ? `Lv.${user.levelInfo.level} ${user.levelInfo.title} ${user.levelInfo.badge}`
+                                    : 'Lv.1 탐험가 🔭'}
+                            </span>
+                            {/* Optional: Add a mini XP bar here if desired */}
                         </div>
                         <div className={styles.avatar}>{user?.username ? getInitials(user.username) : 'G'}</div>
                     </div>

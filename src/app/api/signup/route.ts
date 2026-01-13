@@ -1,23 +1,26 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { prisma } from '@/lib/prisma'; // Use Prisma
 import { signupSchema } from '@/lib/validators/auth';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
 export async function POST(req: Request) {
-    console.log('API Hit: /api/signup');
     try {
         const body = await req.json();
         const { username, email, password } = signupSchema.parse(body);
 
-        // 1. Check if user exists
-        const existingUser = await db.query(
-            'SELECT * FROM "User" WHERE username = $1 OR email = $2',
-            [username, email]
-        );
+        // 1. Check if user exists (Prisma)
+        const existingUser = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    { username: username },
+                    { email: email }
+                ]
+            }
+        });
 
-        if (existingUser.rows.length > 0) {
-            if (existingUser.rows[0].username === username) {
+        if (existingUser) {
+            if (existingUser.username === username) {
                 return NextResponse.json(
                     { message: '이미 사용 중인 아이디입니다.' },
                     { status: 409 }
@@ -32,15 +35,15 @@ export async function POST(req: Request) {
         // 2. Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // 3. Create user
-        // Generate UUID manually since uuid-ossp might not be enabled
-        const id = crypto.randomUUID();
-
-        await db.query(
-            `INSERT INTO "User" (id, username, email, password, "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, NOW(), NOW())`,
-            [id, username, email, hashedPassword]
-        );
+        // 3. Create user (Prisma)
+        await prisma.user.create({
+            data: {
+                username,
+                email,
+                password: hashedPassword,
+                // totalXP maps to default 0 in schema
+            }
+        });
 
         return NextResponse.json(
             { message: '회원가입이 완료되었습니다.' },

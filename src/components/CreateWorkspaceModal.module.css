@@ -12,7 +12,6 @@
 
 .modal {
     background: #09090b;
-    /* Zinc 950 */
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 20px;
     width: 90%;
@@ -24,6 +23,8 @@
     display: flex;
     flex-direction: column;
     max-height: 85vh;
+    /* Ensure enough height to avoid scrolling when dropdown opens */
+    min-height: 580px;
 }
 
 .closeBtn {
@@ -114,12 +115,34 @@
     padding: 10px 24px 24px;
     overflow-y: auto;
     flex: 1;
+    /* Custom Scrollbar for sleek look */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 .stepContent {
     display: flex;
     flex-direction: column;
     gap: 24px;
+    /* Reserve space for dropdown to avoid layout shift */
+    min-height: 420px;
 }
 
 .stepContent label {
@@ -133,7 +156,6 @@
 
 /* Inputs & Forms */
 .stepContent input,
-.stepContent select,
 .stepContent textarea {
     background: #09090b;
     border: 1px solid #27272a;
@@ -152,7 +174,6 @@
 }
 
 .stepContent input:focus,
-.stepContent select:focus,
 .stepContent textarea:focus {
     border-color: #3b82f6;
     background: #000000;
@@ -641,4 +662,121 @@ input:checked+.slider:before {
     box-shadow: none;
     transform: none;
     filter: none;
+}
+
+/* Custom Select Styles */
+.customSelectWrapper {
+    position: relative;
+    user-select: none;
+}
+
+.selectTrigger {
+    background: #09090b;
+    border: 1px solid #27272a;
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: #ffffff;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.selectTrigger:hover {
+    border-color: #52525b;
+    background: #18181b;
+}
+
+.selectOpen {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    background: #000000;
+}
+
+.selectedValue {
+    font-weight: 500;
+}
+
+.selectArrow {
+    color: #71717a;
+    font-size: 1.2rem;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rotateArrow {
+    transform: rotate(180deg);
+    color: #3b82f6;
+}
+
+.selectDropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    background: #18181b;
+    border: 1px solid #27272a;
+    border-radius: 12px;
+    padding: 6px;
+    z-index: 50;
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    /* Scroll handling */
+    max-height: 240px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.selectDropdown::-webkit-scrollbar {
+    width: 4px;
+}
+
+.selectDropdown::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.selectDropdown::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+}
+
+.selectDropdown::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.selectOption {
+    padding: 12px 14px;
+    border-radius: 8px;
+    color: #e4e4e7;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 500;
+}
+
+.selectOption:hover {
+    background: #27272a;
+    color: #fff;
+    transform: translateX(4px);
+}
+
+.selectedOption {
+    background: #2563eb;
+    color: #fff !important;
+}
+
+.selectedOption:hover {
+    background: #3b82f6;
+}
+
+.checkIcon {
+    font-size: 1rem;
 }
