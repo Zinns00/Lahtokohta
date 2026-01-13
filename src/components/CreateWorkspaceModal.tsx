@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiCheck, FiCalendar, FiClock, FiTarget, FiMinus, FiPlus, FiChevronRight, FiBarChart2 } from 'react-icons/fi';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import styles from './CreateWorkspaceModal.module.css';
 import { ko } from 'date-fns/locale';
+import { FiX, FiCheck, FiChevronRight, FiChevronLeft, FiTarget, FiCalendar, FiClock, FiActivity } from 'react-icons/fi';
+import styles from './CreateWorkspaceModal.module.css';
 
 interface CreateWorkspaceModalProps {
     isOpen: boolean;
@@ -14,136 +14,118 @@ interface CreateWorkspaceModalProps {
     onSuccess: () => void;
 }
 
-const steps = [
-    { id: 1, title: '기본 정보', icon: <FiTarget /> },
-    { id: 2, title: '기간 설정', icon: <FiCalendar /> },
-    { id: 3, title: '목표 설정', icon: <FiClock /> },
-];
-
 export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: CreateWorkspaceModalProps) {
-    const [currentStep, setCurrentStep] = useState(1);
+    const [step, setStep] = useState(1);
+    const [isEndDateEnabled, setIsEndDateEnabled] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
-        difficulty: 'Normal', // Replaced color with difficulty
+        difficulty: 'Normal', // 'Easy' | 'Normal' | 'Hard'
         category: 'Study',
         startDate: new Date(),
         endDate: null as Date | null,
         description: '',
         minStudyHours: 1
     });
-    const [isEndDateEnabled, setIsEndDateEnabled] = useState(false);
-    const [dateInputStr, setDateInputStr] = useState({ start: '', end: '' });
-    const [isLoading, setIsLoading] = useState(false);
 
-    // Initial Setup
-    useEffect(() => {
-        if (isOpen) {
-            const today = new Date();
-            setFormData(prev => ({
-                ...prev,
-                title: '',
-                startDate: today,
-                endDate: null,
-                difficulty: 'Normal'
-            }));
-            setDateInputStr({
-                start: formatDate(today),
-                end: ''
-            });
-            setIsEndDateEnabled(false);
-            setCurrentStep(1);
-        }
-    }, [isOpen]);
-
-    const formatDate = (date: Date | null) => {
-        if (!date) return '';
+    // String state for date inputs to allow manual typing
+    const formatDate = (date: Date) => {
         const y = date.getFullYear();
-        const m = date.getMonth() + 1;
-        const d = date.getDate();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
         return `${y}. ${m}. ${d}.`;
     };
 
-    const parseDate = (str: string) => {
-        const parts = str.match(/(\d+)/g);
-        if (!parts || parts.length < 3) return null;
-        const y = parseInt(parts[0], 10);
-        const m = parseInt(parts[1], 10) - 1;
-        const d = parseInt(parts[2], 10);
-        const date = new Date(y, m, d);
+    const [dateInputStr, setDateInputStr] = useState({
+        start: formatDate(new Date()),
+        end: ''
+    });
+
+    // Reset state when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setStep(1);
+            const now = new Date();
+            setFormData({
+                title: '',
+                difficulty: 'Normal',
+                category: 'Study',
+                startDate: now,
+                endDate: null,
+                description: '',
+                minStudyHours: 1
+            });
+            setDateInputStr({
+                start: formatDate(now),
+                end: ''
+            });
+            setIsEndDateEnabled(false);
+        }
+    }, [isOpen]);
+
+    // Parse date string (YYYY. M. D.)
+    const parseDate = (str: string): Date | null => {
+        const parts = str.split('.').map(p => p.trim()).filter(p => p);
+        if (parts.length < 3) return null;
+        const year = parseInt(parts[0]);
+        const month = parseInt(parts[1]) - 1;
+        const day = parseInt(parts[2]);
+        const date = new Date(year, month, day);
         if (isNaN(date.getTime())) return null;
         return date;
     };
 
-    const handleNext = () => {
-        if (currentStep < 3) setCurrentStep(prev => prev + 1);
-    };
+    // Auto-masking helper
+    const autoFormatDate = (input: string, prevValue: string) => {
+        // Did we delete? (Naive check: length went down)
+        // const isDeleting = input.length < prevValue.length; // Not used for simple forward typing mask
 
-    const handleBack = () => {
-        if (currentStep > 1) setCurrentStep(prev => prev - 1);
-    };
+        // Remove all non-digits
+        let nums = input.replace(/\D/g, '');
 
-    const handleSubmit = async () => {
-        setIsLoading(true);
-        try {
-            const payload = {
-                ...formData,
-                startDate: formData.startDate.toISOString().split('T')[0],
-                endDate: (isEndDateEnabled && formData.endDate)
-                    ? formData.endDate.toISOString().split('T')[0]
-                    : formData.startDate.toISOString().split('T')[0]
-            };
+        // Cap at 8 digits (YYYYMMDD)
+        if (nums.length > 8) nums = nums.slice(0, 8);
 
-            const res = await fetch('/api/workspaces', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!res.ok) throw new Error('Failed to create workspace');
-
-            onSuccess();
-            onClose();
-        } catch (error) {
-            console.error(error);
-            alert('워크스페이스 생성에 실패했습니다.');
-        } finally {
-            setIsLoading(false);
+        // Reconstruct with dots
+        let formatted = nums;
+        if (nums.length > 4) {
+            formatted = `${nums.slice(0, 4)}. ${nums.slice(4)}`;
         }
+        if (nums.length > 6) {
+            formatted = `${nums.slice(0, 4)}. ${nums.slice(4, 6)}. ${nums.slice(6)}`;
+        }
+
+        return formatted;
     };
 
-    const handleCalendarChange = (dates: Date | [Date | null, Date | null] | null) => {
-        if (!dates) return;
+    const handleInputBlur = (field: 'start' | 'end') => {
+        const currentVal = dateInputStr[field];
+        let formatted = autoFormatDate(currentVal, '');
 
-        if (Array.isArray(dates)) {
-            // Range Selection (only when end date enabled)
-            const [start, end] = dates;
+        const parsed = parseDate(formatted);
+        if (parsed) {
+            formatted = formatDate(parsed);
             setFormData(prev => ({
                 ...prev,
-                startDate: start || prev.startDate,
-                endDate: end
+                [field === 'start' ? 'startDate' : 'endDate']: parsed
             }));
-            setDateInputStr({
-                start: formatDate(start || formData.startDate),
-                end: formatDate(end)
-            });
-        } else {
-            // Single Selection
-            const date = dates as Date;
-            if (isEndDateEnabled) {
-                setFormData(prev => ({ ...prev, startDate: date }));
-                setDateInputStr(prev => ({ ...prev, start: formatDate(date) }));
-            } else {
-                setFormData(prev => ({ ...prev, startDate: date, endDate: null }));
-                setDateInputStr(prev => ({ ...prev, start: formatDate(date), end: '' }));
-            }
         }
+        setDateInputStr(prev => ({ ...prev, [field]: formatted }));
     };
 
-    // Explicit Handlers for Inputs
     const handleStartInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
-        setDateInputStr(prev => ({ ...prev, start: val }));
-        const parsed = parseDate(val);
+        const cursor = e.target.selectionStart;
+
+        if (/[^0-9. ]/.test(val)) return;
+
+        let finalVal = val;
+        if (cursor === null || cursor === val.length) {
+            finalVal = autoFormatDate(val, dateInputStr.start);
+        }
+
+        setDateInputStr(prev => ({ ...prev, start: finalVal }));
+
+        const parsed = parseDate(finalVal);
         if (parsed) {
             setFormData(prev => ({ ...prev, startDate: parsed }));
         }
@@ -151,8 +133,18 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
 
     const handleEndInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
-        setDateInputStr(prev => ({ ...prev, end: val }));
-        const parsed = parseDate(val);
+        const cursor = e.target.selectionStart;
+
+        if (/[^0-9. ]/.test(val)) return;
+
+        let finalVal = val;
+        if (cursor === null || cursor === val.length) {
+            finalVal = autoFormatDate(val, dateInputStr.end);
+        }
+
+        setDateInputStr(prev => ({ ...prev, end: finalVal }));
+
+        const parsed = parseDate(finalVal);
         if (parsed) {
             setFormData(prev => ({ ...prev, endDate: parsed }));
         }
@@ -182,52 +174,88 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
         setDateInputStr(prev => ({ ...prev, end: formatDate(end) }));
     };
 
-    const incrementHours = () => setFormData(prev => ({ ...prev, minStudyHours: Math.min(24, prev.minStudyHours + 1) }));
-    const decrementHours = () => setFormData(prev => ({ ...prev, minStudyHours: Math.max(0, prev.minStudyHours - 1) }));
+    const handleDateChange = (dates: Date | null | [Date | null, Date | null]) => {
+        if (Array.isArray(dates)) {
+            const [start, end] = dates;
+            if (start) {
+                setFormData(prev => ({ ...prev, startDate: start, endDate: end }));
+                setDateInputStr({
+                    start: formatDate(start),
+                    end: end ? formatDate(end) : ''
+                });
+            }
+        } else if (dates) {
+            setFormData(prev => ({ ...prev, startDate: dates }));
+            setDateInputStr(prev => ({ ...prev, start: formatDate(dates) }));
+        }
+    };
+
+    const handleSubmit = async () => {
+        try {
+            const res = await fetch('/api/workspaces', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...formData,
+                    endDate: isEndDateEnabled ? formData.endDate?.toISOString() : null
+                })
+            });
+
+            if (res.ok) {
+                onSuccess();
+                onClose();
+            } else {
+                alert('Failed to create workspace');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Error creating workspace');
+        }
+    };
 
     if (!isOpen) return null;
 
     return (
-        <AnimatePresence>
-            <div className={styles.overlay} onClick={onClose}>
-                <motion.div
-                    className={styles.modal}
-                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                    onClick={e => e.stopPropagation()}
-                >
-                    <button className={styles.closeBtn} onClick={onClose}><FiX /></button>
+        <div className={styles.overlay}>
+            <motion.div
+                className={styles.modal}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+            >
+                <button className={styles.closeBtn} onClick={onClose}><FiX /></button>
 
-                    <div className={styles.header}>
-                        <h2>새 워크스페이스 만들기</h2>
-                        <div className={styles.stepIndicator}>
-                            {steps.map(step => (
-                                <div
-                                    key={step.id}
-                                    className={`${styles.step} ${step.id <= currentStep ? styles.activeStep : ''}`}
-                                >
-                                    <div className={styles.stepIcon}>{step.icon}</div>
-                                    <span>{step.title}</span>
+                <div className={styles.header}>
+                    <h2>새 워크스페이스 만들기</h2>
+                    <div className={styles.stepIndicator}>
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className={`${styles.step} ${step === i ? styles.activeStep : ''}`}>
+                                <div className={styles.stepIcon}>
+                                    {i === 1 ? <FiTarget /> : i === 2 ? <FiCalendar /> : <FiClock />}
                                 </div>
-                            ))}
-                        </div>
+                                <span>{i === 1 ? '기본 정보' : i === 2 ? '기간 설정' : '목표 설정'}</span>
+                            </div>
+                        ))}
                     </div>
+                </div>
 
-                    <div className={styles.content}>
-                        {currentStep === 1 && (
+                <div className={styles.content}>
+                    <AnimatePresence mode="wait">
+                        {step === 1 && (
                             <motion.div
+                                key="step1"
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
                                 className={styles.stepContent}
                             >
                                 <label>
                                     워크스페이스 이름
                                     <input
                                         type="text"
+                                        placeholder="예: 자격증 공부, 코딩 테스트 준비"
                                         value={formData.title}
                                         onChange={e => setFormData({ ...formData, title: e.target.value })}
-                                        placeholder="예: 아침 코딩 스터디"
                                         autoFocus
                                     />
                                 </label>
@@ -240,8 +268,8 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
                                     >
                                         <option value="Study">공부 (Study)</option>
                                         <option value="Project">프로젝트 (Project)</option>
-                                        <option value="Hobby">취미 (Hobby)</option>
                                         <option value="Health">운동 (Health)</option>
+                                        <option value="Hobby">취미 (Hobby)</option>
                                     </select>
                                 </label>
 
@@ -266,24 +294,30 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
                             </motion.div>
                         )}
 
-                        {currentStep === 2 && (
+                        {step === 2 && (
                             <motion.div
+                                key="step2"
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
                                 className={styles.stepContent}
                             >
+                                {/* Date Inputs Header */}
                                 <div className={styles.dateInputsHeader}>
                                     <div className={styles.dateField}>
                                         <span>시작일</span>
                                         <input
                                             type="text"
+                                            className={styles.dateTextInput}
                                             value={dateInputStr.start}
                                             onChange={handleStartInputChange}
-                                            placeholder="YYYY. MM. DD"
-                                            className={styles.dateTextInput}
+                                            onBlur={() => handleInputBlur('start')}
+                                            placeholder="YYYY. MM. DD."
                                         />
                                     </div>
-                                    <div className={styles.arrowContainer}><FiChevronRight /></div>
+                                    <div className={styles.arrowContainer}>
+                                        <FiChevronRight />
+                                    </div>
                                     <div className={`${styles.dateField} ${!isEndDateEnabled ? styles.disabledField : ''}`}>
                                         <div className={styles.endDateLabel}>
                                             <span>종료일</span>
@@ -298,15 +332,17 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
                                         </div>
                                         <input
                                             type="text"
+                                            className={styles.dateTextInput}
                                             value={isEndDateEnabled ? dateInputStr.end : ''}
                                             onChange={handleEndInputChange}
-                                            placeholder={isEndDateEnabled ? "YYYY. MM. DD" : "설정 없음"}
-                                            className={styles.dateTextInput}
+                                            onBlur={() => handleInputBlur('end')}
+                                            placeholder={isEndDateEnabled ? "YYYY. MM. DD." : "설정 없음"}
                                             disabled={!isEndDateEnabled}
                                         />
                                     </div>
                                 </div>
 
+                                {/* Quick Presets */}
                                 {isEndDateEnabled && (
                                     <div className={styles.presetButtons}>
                                         <button onClick={() => setPreset(7)}>1주</button>
@@ -316,67 +352,85 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
                                     </div>
                                 )}
 
+                                {/* Calendar */}
                                 <div className={styles.calendarWrapper}>
                                     <DatePicker
                                         selected={formData.startDate}
-                                        onChange={handleCalendarChange}
+                                        onChange={handleDateChange}
                                         startDate={formData.startDate}
-                                        endDate={formData.endDate}
+                                        endDate={isEndDateEnabled ? formData.endDate : null}
                                         selectsRange={isEndDateEnabled}
                                         inline
                                         locale={ko}
-                                        dateFormat="yyyy. MM. dd"
+                                        dateFormat="yyyy.MM.dd"
                                     />
                                 </div>
                             </motion.div>
                         )}
 
-                        {currentStep === 3 && (
+                        {step === 3 && (
                             <motion.div
+                                key="step3"
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
                                 className={styles.stepContent}
                             >
                                 <label>
-                                    메인 목표
-                                    <textarea
-                                        value={formData.description}
-                                        onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                        placeholder="이 워크스페이스의 최종 목표는 무엇인가요?"
-                                        rows={3}
-                                    />
-                                </label>
-
-                                <label>
-                                    일일 최소 공부 시간
+                                    최소 공부 시간 (일일)
                                     <div className={styles.timeControl}>
-                                        <button onClick={decrementHours} className={styles.timeBtn}><FiMinus /></button>
+                                        <button
+                                            className={styles.timeBtn}
+                                            onClick={() => setFormData(p => ({ ...p, minStudyHours: p.minStudyHours <= 0 ? 24 : p.minStudyHours - 1 }))}
+                                        >-</button>
                                         <div className={styles.timeDisplay}>
                                             <span className={styles.timeValue}>{formData.minStudyHours}</span>
                                             <span className={styles.timeUnit}>시간</span>
                                         </div>
-                                        <button onClick={incrementHours} className={styles.timeBtn}><FiPlus /></button>
+                                        <button
+                                            className={styles.timeBtn}
+                                            onClick={() => setFormData(p => ({ ...p, minStudyHours: p.minStudyHours >= 24 ? 0 : p.minStudyHours + 1 }))}
+                                        >+</button>
                                     </div>
-                                    <p className={styles.helperText}>하루에 이만큼은 꼭 공부해요!</p>
+                                    <p className={styles.helperText}>매일 이 시간만큼 공부하면 출석이 인정됩니다.</p>
+                                </label>
+
+                                <label>
+                                    워크스페이스 목표 (선택)
+                                    <textarea
+                                        rows={3}
+                                        placeholder="이 워크스페이스에서 이루고 싶은 목표를 적어주세요."
+                                        value={formData.description}
+                                        onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                    />
                                 </label>
                             </motion.div>
                         )}
-                    </div>
+                    </AnimatePresence>
+                </div>
 
-                    <div className={styles.footer}>
-                        {currentStep > 1 && (
-                            <button className={styles.backBtn} onClick={handleBack}>이전</button>
-                        )}
-                        {currentStep < 3 ? (
-                            <button className={styles.nextBtn} onClick={handleNext} disabled={!formData.title}>다음</button>
-                        ) : (
-                            <button className={styles.createBtn} onClick={handleSubmit} disabled={isLoading}>
-                                {isLoading ? '생성 중...' : '생성 완료'}
-                            </button>
-                        )}
-                    </div>
-                </motion.div>
-            </div>
-        </AnimatePresence>
+                <div className={styles.footer}>
+                    {step > 1 && (
+                        <button className={styles.backBtn} onClick={() => setStep(step - 1)}>
+                            이전
+                        </button>
+                    )}
+
+                    {step < 3 ? (
+                        <button
+                            className={styles.nextBtn}
+                            onClick={() => setStep(step + 1)}
+                            disabled={step === 1 && !formData.title}
+                        >
+                            다음
+                        </button>
+                    ) : (
+                        <button className={styles.createBtn} onClick={handleSubmit}>
+                            생성 완료
+                        </button>
+                    )}
+                </div>
+            </motion.div>
+        </div>
     );
 }
