@@ -3,9 +3,7 @@
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.7);
-    /* Darker overlay for focus */
     backdrop-filter: blur(8px);
-    /* stronger blur */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -14,14 +12,12 @@
 
 .modal {
     background: #09090b;
-    /* Very dark, almost black base (Zinc 950) */
+    /* Zinc 950 */
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 20px;
-    /* Softer, modern corners */
     width: 90%;
     max-width: 500px;
     color: #e4e4e7;
-    /* Zinc 200 */
     overflow: hidden;
     position: relative;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
@@ -35,7 +31,6 @@
     top: 20px;
     right: 20px;
     background: rgba(255, 255, 255, 0.05);
-    /* Subtle button bg */
     border: none;
     color: #a1a1aa;
     cursor: pointer;
@@ -83,7 +78,6 @@
     align-items: center;
     gap: 8px;
     color: #52525b;
-    /* Zinc 600 - muted */
     font-size: 0.75rem;
     font-weight: 600;
     transition: all 0.3s;
@@ -94,9 +88,7 @@
     width: 36px;
     height: 36px;
     border-radius: 12px;
-    /* Squircle */
     background: #18181b;
-    /* Zinc 900 */
     border: 1px solid #27272a;
     display: flex;
     align-items: center;
@@ -111,7 +103,6 @@
 
 .activeStep .stepIcon {
     background: #2563eb;
-    /* Blue 600 */
     border-color: #2563eb;
     color: white;
     box-shadow: 0 0 20px rgba(37, 99, 235, 0.4);
@@ -129,7 +120,6 @@
     display: flex;
     flex-direction: column;
     gap: 24px;
-    /* Increased gap for better spacing */
 }
 
 .stepContent label {
@@ -138,32 +128,27 @@
     gap: 10px;
     font-size: 0.95rem;
     color: #f4f4f5;
-    /* Zinc 100 - Much brighter text */
     font-weight: 600;
 }
 
-/* Inputs & Forms - Darker, Deeper Background */
+/* Inputs & Forms */
 .stepContent input,
 .stepContent select,
 .stepContent textarea {
     background: #09090b;
-    /* Almost black */
     border: 1px solid #27272a;
     border-radius: 12px;
     padding: 16px;
     color: #ffffff;
-    /* Pure white text */
     font-size: 1rem;
     outline: none;
     transition: all 0.2s ease;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-    /* Inner shadow for depth */
 }
 
 .stepContent input::placeholder,
 .stepContent textarea::placeholder {
     color: #52525b;
-    /* Muted placeholder */
 }
 
 .stepContent input:focus,
@@ -171,7 +156,6 @@
 .stepContent textarea:focus {
     border-color: #3b82f6;
     background: #000000;
-    /* Pitch black on focus */
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
@@ -222,7 +206,6 @@
     border-width: 1px;
 }
 
-/* Difficulty Colors */
 .selectedDifficulty.easy {
     border-color: #4ade80;
     box-shadow: 0 0 20px rgba(74, 222, 128, 0.15);
@@ -266,7 +249,7 @@
 }
 
 
-/* --- DATE & CALENDAR REDESIGN --- */
+/* --- DATE & CALENDAR CSS --- */
 
 .dateInputsHeader {
     display: flex;
@@ -299,7 +282,6 @@
     font-weight: 600;
     text-align: center;
     font-family: 'JetBrains Mono', monospace;
-    /* Tech feel for dates */
     transition: 0.2s;
 }
 
@@ -360,7 +342,6 @@
 
 input:checked+.slider {
     background-color: #172554;
-    /* Dark blue bg */
 }
 
 input:checked+.slider:before {
@@ -394,22 +375,19 @@ input:checked+.slider:before {
     border-color: #52525b;
 }
 
-/* Calendar Container - The "Card" Look */
+/* Calendar Container */
 .calendarWrapper {
     display: flex;
     justify-content: center;
     align-items: center;
     background: #1c1c1f;
-    /* Lighter than modal, distinct surface */
     padding: 24px;
     border-radius: 16px;
     border: 1px solid rgba(255, 255, 255, 0.05);
     margin-top: 8px;
     box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
-    /* Inner depth */
 }
 
-/* React Datepicker Overrides - Clean & Sharp */
 .calendarWrapper :global(.react-datepicker) {
     background-color: transparent;
     border: none;
@@ -427,7 +405,6 @@ input:checked+.slider:before {
 .calendarWrapper :global(.react-datepicker__header) {
     background-color: transparent;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    /* Very subtle divider */
     padding-bottom: 16px;
     margin-bottom: 16px;
 }
@@ -442,7 +419,6 @@ input:checked+.slider:before {
 
 .calendarWrapper :global(.react-datepicker__day-name) {
     color: #71717a;
-    /* Zinc 500 */
     width: 2.5rem;
     margin: 0.2rem;
     font-weight: 600;
@@ -455,15 +431,12 @@ input:checked+.slider:before {
     height: 2.5rem;
     line-height: 2.5rem;
     border-radius: 10px;
-    /* Modern rounding */
     margin: 0.2rem;
     font-size: 0.95rem;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid transparent;
-    /* Prevent jump on border change */
 }
 
-/* Hover State */
 .calendarWrapper :global(.react-datepicker__day:hover) {
     background-color: #27272a;
     color: white;
@@ -472,30 +445,39 @@ input:checked+.slider:before {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-/* Selected State - Deeper Blue for Contrast (Text Visibility) */
+/* Selected State - Vibrant Blue (With !important to fix ghosting/override) */
 .calendarWrapper :global(.react-datepicker__day--selected),
 .calendarWrapper :global(.react-datepicker__day--range-start),
 .calendarWrapper :global(.react-datepicker__day--range-end) {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    /* Reverted to Deeper Blue */
-    color: #ffffff;
-    /* Pure White Text */
+    background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+    color: #ffffff !important;
     font-weight: 700;
-    border-color: transparent;
+    border-color: transparent !important;
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
-    /* Deeper Glow */
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    /* Slight shadow for readability */
 }
 
-/* In Range - Keep it Bright */
+/* In Range - Bright Pastel Blue */
 .calendarWrapper :global(.react-datepicker__day--in-range) {
-    background-color: rgba(96, 165, 250, 0.2);
-    /* Bright bg for range */
-    color: #bfdbfe;
-    /* Blue 200 - Very bright text */
+    background-color: rgba(96, 165, 250, 0.2) !important;
+    color: #bfdbfe !important;
     border-radius: 0;
 }
+
+/* FIX: Keyboard Selected Ghosting 
+   Overrides the default gray background applied by react-datepicker on keyboard focus.
+*/
+.calendarWrapper :global(.react-datepicker__day--keyboard-selected) {
+    background-color: transparent !important;
+    color: inherit;
+    /* Optional: visible border for accessibility if needed, else transparent */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.calendarWrapper :global(.react-datepicker__day--keyboard-selected:hover) {
+    background-color: #27272a !important;
+}
+
 
 /* Range Corners */
 .calendarWrapper :global(.react-datepicker__day--range-start) {
@@ -524,72 +506,8 @@ input:checked+.slider:before {
     position: relative;
     font-weight: 700;
     color: #60a5fa;
-    /* Brighter blue for today */
 }
 
-/* Time Controls (Step 3) */
-.timeControl {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 32px;
-    margin-top: 24px;
-    background: #18181b;
-    padding: 24px;
-    border-radius: 16px;
-    border: 1px solid #27272a;
-}
-
-.timeBtn {
-    width: 56px;
-    height: 56px;
-    border-radius: 16px;
-    border: 1px solid #27272a;
-    background: #09090b;
-    color: #fff;
-    font-size: 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.timeBtn:hover {
-    border-color: #3b82f6;
-    color: #3b82f6;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
-.timeDisplay {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
-
-.timeValue {
-    font-size: 3.5rem;
-    font-weight: 800;
-    color: #fff;
-    line-height: 1;
-    letter-spacing: -0.05em;
-    font-variant-numeric: tabular-nums;
-}
-
-.timeUnit {
-    font-size: 1rem;
-    color: #71717a;
-    font-weight: 600;
-}
-
-.helperText {
-    text-align: center;
-    color: #52525b;
-    font-size: 0.85rem;
-    margin-top: 12px;
-}
 
 /* Footer & Buttons */
 .footer {
@@ -597,13 +515,11 @@ input:checked+.slider:before {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    /* Spreads Back and Next to edges */
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     background: rgba(9, 9, 11, 0.8);
     backdrop-filter: blur(10px);
     margin-top: auto;
     position: sticky;
-    /* Stick to bottom if content scrolls */
     bottom: 0;
     z-index: 20;
 }
@@ -611,7 +527,6 @@ input:checked+.slider:before {
 .backBtn {
     background: transparent;
     color: #a1a1aa;
-    /* Zinc 400 */
     border: none;
     cursor: pointer;
     padding: 10px 16px;
@@ -628,21 +543,17 @@ input:checked+.slider:before {
 
 .nextBtn,
 .createBtn {
-    background: #3b82f6;
-    /* Solid Blue fallback */
     background: linear-gradient(135deg, #3b82f6, #2563eb);
     color: white;
     border: none;
     border-radius: 10px;
     padding: 12px 32px;
-    /* Wider button */
     font-weight: 600;
     font-size: 0.95rem;
     cursor: pointer;
     transition: all 0.2s;
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
     margin-left: auto;
-    /* Force push to right if Back button is missing */
 }
 
 .nextBtn:hover,
