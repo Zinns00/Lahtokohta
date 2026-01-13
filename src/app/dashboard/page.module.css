@@ -1,0 +1,288 @@
+/* Layout */
+.container {
+    min-height: 100vh;
+    background-color: #fafafa;
+    /* Very light gray, trending in minimal design */
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Navbar */
+.navbar {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #111;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.profileSection {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.streakBadge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff0f0;
+    color: #e11d48;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.userProfile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 999px;
+    transition: background 0.2s;
+}
+
+.userProfile:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #111, #333);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.userInfo {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.userName {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #111;
+}
+
+.userTitle {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+/* Main Content */
+.main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 60px 40px;
+}
+
+.sectionHeader {
+    margin-bottom: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.greeting {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #111;
+    margin-bottom: 8px;
+    letter-spacing: -0.03em;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+/* Grid */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+}
+
+/* Workspace Card */
+.card {
+    background: white;
+    border-radius: 24px;
+    padding: 28px;
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: cardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 240px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+.card:hover {
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    border-color: transparent;
+}
+
+/* Level Borders - Dynamic styling based on props or classes */
+.cardBronze {
+    border-top: 4px solid #cd7f32;
+}
+
+.cardSilver {
+    border-top: 4px solid #c0c0c0;
+}
+
+.cardGold {
+    border-top: 4px solid #fbbf24;
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.cardIcon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: #f4f4f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.cardMenuBtn {
+    color: #a1a1aa;
+    font-size: 1.2rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.card:hover .cardMenuBtn {
+    opacity: 1;
+}
+
+.cardTitle {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+.cardMeta {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 24px;
+}
+
+.progressBar {
+    width: 100%;
+    height: 6px;
+    background: #f0f0f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: auto;
+}
+
+.progressFill {
+    height: 100%;
+    background: #111;
+    border-radius: 999px;
+    transition: width 1s ease-out;
+}
+
+/* Create New Card */
+.createCard {
+    background: #f9f9f9;
+    border: 2px dashed #e4e4e7;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    color: #71717a;
+    transition: all 0.3s;
+}
+
+.createCard:hover {
+    border-color: #111;
+    color: #111;
+    background: #fff;
+}
+
+.plusIcon {
+    font-size: 2.5rem;
+    font-weight: 300;
+}
+
+.createText {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes cardEnter {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
