@@ -5,6 +5,27 @@ import styles from './page.module.css';
 import { FiSearch, FiMenu, FiArrowRight } from "react-icons/fi";
 import { FaInstagram, FaTwitter, FaFacebookF, FaYoutube } from "react-icons/fa";
 import AuthModal from '@/components/AuthModal';
+import { motion, Variants } from 'framer-motion';
+
+const fadeInUp: Variants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+};
+
+const staggerContainer: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2
+    }
+  }
+};
+
+const imageVariant: Variants = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.8, ease: "easeOut" } }
+};
 
 export default function Home() {
   const [activeFilter, setActiveFilter] = useState('Featured');
@@ -14,151 +35,227 @@ export default function Home() {
     <main className={styles.main}>
       <div className={styles.container}>
         {/* Header */}
-        <header className={styles.header}>
+        <motion.header
+          className={styles.header}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <div className={styles.logo}>Lahtokohta</div>
           <nav className={styles.nav}>
-            <a href="#" className={styles.navLink}>Workspaces</a>
-            <a href="#" className={styles.navLink}>Challenges</a>
-            <a href="#" className={styles.navLink}>Community</a>
-            <a href="#" className={styles.navLink}>About</a>
+            <a href="#" className={styles.navLink}>워크스페이스</a>
+            <a href="#" className={styles.navLink}>챌린지</a>
+            <a href="#" className={styles.navLink}>커뮤니티</a>
+            <a href="#" className={styles.navLink}>소개</a>
           </nav>
           <div className={styles.headerActions}>
-            <button className={styles.searchBtn} aria-label="Search">
+            <button className={styles.searchBtn} aria-label="검색">
               <FiSearch />
             </button>
-            <button
+            <motion.button
               className={styles.signInBtn}
               onClick={() => setIsAuthOpen(true)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              Sign In
-            </button>
+              로그인
+            </motion.button>
           </div>
-        </header>
+        </motion.header>
 
         {/* Hero Section */}
         <section className={styles.hero}>
-          <div className={styles.heroContent}>
-            <h1 className={styles.heroTitle}>
-              Unlock Your<br />True Potential<br />Together
-            </h1>
-            <p className={styles.heroText}>
-              Turn your goals into an immersive game. Track progress, collaborate with friends, and visualize your growth in a platform designed for deep focus and achievement.
-            </p>
-            <button
+          <motion.div
+            className={styles.heroContent}
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+          >
+            <motion.h1 className={styles.heroTitle} variants={fadeInUp}>
+              함께 당신의<br />진정한 잠재력을<br />깨우세요
+            </motion.h1>
+            <motion.p className={styles.heroText} variants={fadeInUp}>
+              목표 달성을 몰입감 넘치는 게임으로 만들어보세요. 친구들과 협력하고, 성장을 기록하며, 몰입을 위해 설계된 플랫폼에서 당신의 발전을 시각화하세요.
+            </motion.p>
+            <motion.button
               className={styles.ctaButton}
               onClick={() => setIsAuthOpen(true)}
+              variants={fadeInUp}
+              whileHover={{ scale: 1.05, boxShadow: "0px 0px 20px rgba(255, 68, 68, 0.4)" }}
+              whileTap={{ scale: 0.95 }}
             >
-              Start Your Journey
-            </button>
-          </div>
+              여정 시작하기
+            </motion.button>
+          </motion.div>
           <div className={styles.heroImages}>
-            <div className={styles.heroImageCard}>
+            <motion.div
+              className={styles.heroImageCard}
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+            >
               <img
                 src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop"
-                alt="Collaboration"
+                alt="협업"
                 className={styles.heroImage}
               />
-            </div>
-            <div className={styles.heroImageCard}>
+            </motion.div>
+            <motion.div
+              className={styles.heroImageCard}
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+            >
               <img
                 src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop"
-                alt="Focus"
+                alt="몰입"
                 className={styles.heroImage}
               />
-            </div>
+            </motion.div>
           </div>
         </section>
 
         {/* Workspaces Section (Originally Top Destinations) */}
         <section className={styles.section}>
           <div className={styles.destinationsHeader}>
-            <h2 className={styles.sectionTitle}>Popular Goal Templates</h2>
-            <button className={styles.navLink}>Browse all templates</button>
+            <h2 className={styles.sectionTitle}>인기 목표 템플릿</h2>
+            <button className={styles.navLink}>전체 보기</button>
           </div>
 
-          <div className={styles.filters}>
-            {['Featured', 'Study', 'Health', 'Creative', 'Business'].map((filter) => (
-              <button
+          <motion.div
+            className={styles.filters}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            {['추천', '학습', '건강', '창작', '비즈니스'].map((filter) => (
+              <motion.button
                 key={filter}
                 className={`${styles.filterChip} ${activeFilter === filter ? styles.active : ''}`}
                 onClick={() => setActiveFilter(filter)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 {filter}
-              </button>
+              </motion.button>
             ))}
-          </div>
+          </motion.div>
 
-          <div className={styles.grid} style={{ marginTop: '2rem' }}>
+          <motion.div
+            className={styles.grid}
+            style={{ marginTop: '2rem' }}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={staggerContainer}
+          >
             {[
-              { title: 'Morning Miracle', desc: 'Build a powerful morning routine', img: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=800' },
-              { title: 'Deep Work Sprite', desc: '4 Hours of focused coding', img: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800' },
-              { title: 'Reading Challenge', desc: 'Read 50 books this year', img: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=800' },
-              { title: 'Fitness Streak', desc: '30 Days of movement', img: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=800' }
+              { title: '미라클 모닝', desc: '강력한 아침 루틴 만들기', img: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=800' },
+              { title: '딥워크 스프린트', desc: '4시간 집중 코딩', img: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800' },
+              { title: '독서 챌린지', desc: '올해 책 50권 읽기', img: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=800' },
+              { title: '운동 스트릭', desc: '30일 연속 움직이기', img: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=800' }
             ].map((item, i) => (
-              <div key={i} className={styles.card}>
+              <motion.div
+                key={i}
+                className={styles.card}
+                variants={fadeInUp}
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              >
                 <div className={styles.cardImageWrapper}>
-                  <img src={item.img} alt={item.title} className={styles.cardImage} />
+                  <motion.img
+                    src={item.img}
+                    alt={item.title}
+                    className={styles.cardImage}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.3 }}
+                  />
                 </div>
                 <div>
                   <h3 className={styles.cardTitle}>{item.title}</h3>
                   <p className={styles.cardSubtitle}>{item.desc}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </section>
 
         {/* Success Stories (Originally Stories) */}
         <section className={styles.section}>
           <div className={styles.destinationsHeader}>
-            <h2 className={styles.sectionTitle}>Success Stories</h2>
-            <button className={styles.navLink}>Read more</button>
+            <h2 className={styles.sectionTitle}>성공 사례</h2>
+            <button className={styles.navLink}>더 읽어보기</button>
           </div>
 
           <div className={styles.storiesGrid}>
-            <div className={styles.featuredStory}>
+            <motion.div
+              className={styles.featuredStory}
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
               <div className={styles.storyImageWrapper} style={{ aspectRatio: '4/3' }}>
-                <img
+                <motion.img
                   src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200"
-                  alt="Team Success"
+                  alt="팀 성공"
                   className={styles.cardImage}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.3 }}
                 />
               </div>
               <div>
-                <span className={styles.cardSubtitle}>Community</span>
+                <span className={styles.cardSubtitle}>커뮤니티</span>
                 <h3 className={styles.storyTitle} style={{ marginTop: '0.5rem' }}>
-                  How a group of 5 developers shipped their dream product in 30 days using Lahtokohta
+                  개발자 5명이 Lahtokohta를 통해 30일 만에 꿈의 제품을 출시한 방법
                 </h3>
               </div>
-            </div>
+            </motion.div>
 
-            <div className={styles.storyList}>
+            <motion.div
+              className={styles.storyList}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={staggerContainer}
+            >
               {[
-                { title: 'The Science of Gamification: Why it works for goals', cat: 'Methodology', img: 'https://images.unsplash.com/photo-1616469829581-73993eb86b02?q=80&w=200' },
-                { title: 'From Procrastination to Flow: A User Journey', cat: 'Productivity', img: 'https://images.unsplash.com/photo-1456406111435-d0cfe4755f9e?q=80&w=200' },
-                { title: 'Understanding the XP System and Rewards', cat: 'Guide', img: 'https://images.unsplash.com/photo-1553481187-be93c21490a9?q=80&w=200' }
+                { title: '게이미피케이션의 과학: 왜 목표 달성에 효과적인가?', cat: '방법론', img: 'https://images.unsplash.com/photo-1616469829581-73993eb86b02?q=80&w=200' },
+                { title: '미루는 습관에서 몰입의 경지까지: 사용자 여정', cat: '생산성', img: 'https://images.unsplash.com/photo-1456406111435-d0cfe4755f9e?q=80&w=200' },
+                { title: 'XP 시스템과 보상 이해하기', cat: '가이드', img: 'https://images.unsplash.com/photo-1553481187-be93c21490a9?q=80&w=200' }
               ].map((story, i) => (
-                <div key={i} className={styles.storyItem}>
+                <motion.div
+                  key={i}
+                  className={styles.storyItem}
+                  variants={fadeInUp}
+                  whileHover={{ x: 5 }}
+                >
                   <img src={story.img} alt={story.title} className={styles.storyItemImage} />
                   <div>
                     <span className={styles.cardSubtitle} style={{ display: 'block', fontSize: '0.8rem', marginBottom: '0.2rem' }}>{story.cat}</span>
                     <h4 className={styles.cardTitle} style={{ fontSize: '1rem', lineHeight: '1.4' }}>{story.title}</h4>
                   </div>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
 
         {/* Newsletter */}
         <section className={styles.newsletter}>
-          <div className={styles.container}>
-            <h2 className={styles.newsletterTitle}>Join Our Community Digest</h2>
+          <motion.div
+            className={styles.container}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className={styles.newsletterTitle}>커뮤니티 소식 받아보기</h2>
             <form className={styles.newsletterForm} onSubmit={(e) => e.preventDefault()}>
-              <input type="email" placeholder="Enter your email" className={styles.input} />
-              <button className={styles.submitBtn}>Subscribe</button>
+              <input type="email" placeholder="이메일 주소를 입력하세요" className={styles.input} />
+              <button className={styles.submitBtn}>구독하기</button>
             </form>
-          </div>
+          </motion.div>
         </section>
 
         {/* Footer */}
@@ -172,27 +269,27 @@ export default function Home() {
                 </div>
               </div>
               <div className={styles.footerCol}>
-                <h4>Platform</h4>
-                <a href="#" className={styles.footerLink}>Features</a>
-                <a href="#" className={styles.footerLink}>Pricing</a>
-                <a href="#" className={styles.footerLink}>Enterprise</a>
+                <h4>플랫폼</h4>
+                <a href="#" className={styles.footerLink}>기능</a>
+                <a href="#" className={styles.footerLink}>요금제</a>
+                <a href="#" className={styles.footerLink}>엔터프라이즈</a>
               </div>
               <div className={styles.footerCol}>
-                <h4>Resources</h4>
-                <a href="#" className={styles.footerLink}>Blog</a>
-                <a href="#" className={styles.footerLink}>Community</a>
-                <a href="#" className={styles.footerLink}>Help Center</a>
+                <h4>리소스</h4>
+                <a href="#" className={styles.footerLink}>블로그</a>
+                <a href="#" className={styles.footerLink}>커뮤니티</a>
+                <a href="#" className={styles.footerLink}>고객센터</a>
               </div>
               <div className={styles.footerCol}>
-                <h4>Company</h4>
-                <a href="#" className={styles.footerLink}>About</a>
-                <a href="#" className={styles.footerLink}>Careers</a>
-                <a href="#" className={styles.footerLink}>Contact</a>
+                <h4>회사</h4>
+                <a href="#" className={styles.footerLink}>소개</a>
+                <a href="#" className={styles.footerLink}>채용</a>
+                <a href="#" className={styles.footerLink}>문의하기</a>
               </div>
               <div className={styles.footerCol}>
-                <h4>Legal</h4>
-                <a href="#" className={styles.footerLink}>Privacy</a>
-                <a href="#" className={styles.footerLink}>Terms</a>
+                <h4>법적 고지</h4>
+                <a href="#" className={styles.footerLink}>개인정보처리방침</a>
+                <a href="#" className={styles.footerLink}>이용약관</a>
               </div>
             </div>
           </div>

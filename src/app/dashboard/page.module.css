@@ -3,7 +3,6 @@
     min-height: 100vh;
     background-color: #fafafa;
     /* Very light gray, trending in minimal design */
-    animation: fadeIn 0.5s ease-out;
 }
 
 /* Navbar */
@@ -105,7 +104,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    align-items: flex-end;
 }
 
 .greeting {
@@ -128,161 +127,453 @@
     gap: 24px;
 }
 
-/* Workspace Card */
+/* Workspace Card - Dark Fantasy RPG UI */
 .card {
-    background: white;
-    border-radius: 24px;
-    padding: 28px;
+    background: #111116;
+    /* Dark background from Dark Fantasy ref */
+    border-radius: 2px;
+    /* Sharper corners for game UI */
+    padding: 20px 16px;
+    /* Reduced padding */
     position: relative;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    animation: cardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 240px;
+    min-height: 220px;
+    /* Reduced height */
     cursor: pointer;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+    margin: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    /* Slight border for definition */
+    color: #e2e8f0;
 }
 
+/* Common Frame Structure (The "Scalable" box look) */
+.card::before,
+.card::after {
+    content: '';
+    position: absolute;
+    transition: all 0.4s ease;
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* Inner border frame - creates the "Outline" look */
+.cardContentCore {
+    position: absolute;
+    inset: 4px;
+    /* Inner spacing */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Corner Decorations - "Bracket" Style */
+.card::before {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Create corners using gradients */
+    background:
+        linear-gradient(to right, var(--tier-color) 2px, transparent 2px) 0 0,
+        linear-gradient(to bottom, var(--tier-color) 2px, transparent 2px) 0 0,
+        linear-gradient(to left, var(--tier-color) 2px, transparent 2px) 100% 0,
+        linear-gradient(to bottom, var(--tier-color) 2px, transparent 2px) 100% 0,
+        linear-gradient(to right, var(--tier-color) 2px, transparent 2px) 0 100%,
+        linear-gradient(to top, var(--tier-color) 2px, transparent 2px) 0 100%,
+        linear-gradient(to left, var(--tier-color) 2px, transparent 2px) 100% 100%,
+        linear-gradient(to top, var(--tier-color) 2px, transparent 2px) 100% 100%;
+
+    background-repeat: no-repeat;
+    background-size: 16px 16px;
+    /* Size of the brackets */
+}
+
+/* Top Center Decoration (Small diamond/detail from Ref 2) */
+.card::after {
+    top: -3px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 6px;
+    height: 6px;
+    background: var(--tier-color);
+    box-shadow: 0 0 10px var(--tier-color);
+}
+
+/* Hover Effects */
 .card:hover {
-    transform: translateY(-8px) scale(1.01);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
-    border-color: transparent;
+    transform: translateY(-4px);
+    box-shadow: 0 0 30px var(--tier-glow);
+    /* Keep background dark but slightly lighter, NOT white */
+    background: #1a1a20;
 }
 
-/* Level Borders - Dynamic styling based on props or classes */
+/* --- TIER DEFINITIONS (10 Levels) --- */
+
+/* Tier 1: Bronze */
 .cardBronze {
-    border-top: 4px solid #cd7f32;
+    --tier-color: #cd7f32;
+    --tier-glow: rgba(205, 127, 50, 0.2);
+    --tier-bg: #2a1f1a;
 }
 
+.cardBronze .cardContentCore {
+    border-color: rgba(205, 127, 50, 0.2);
+}
+
+/* Tier 2: Silver */
 .cardSilver {
-    border-top: 4px solid #c0c0c0;
+    --tier-color: #a5f3fc;
+    --tier-glow: rgba(165, 243, 252, 0.25);
+    --tier-bg: #1a2226;
 }
 
+.cardSilver .cardContentCore {
+    border-color: rgba(165, 243, 252, 0.2);
+}
+
+/* Tier 3: Gold */
 .cardGold {
-    border-top: 4px solid #fbbf24;
+    --tier-color: #fbbf24;
+    --tier-glow: rgba(251, 191, 36, 0.3);
+    --tier-bg: #292415;
 }
 
-.cardHeader {
+.cardGold .cardContentCore {
+    border-color: rgba(251, 191, 36, 0.2);
+}
+
+/* Tier 4: Platinum */
+.cardPlatinum {
+    --tier-color: #e2e8f0;
+    /* White-ish Blue */
+    --tier-glow: rgba(226, 232, 240, 0.4);
+    --tier-bg: #1e293b;
+}
+
+.cardPlatinum .cardContentCore {
+    border-color: rgba(226, 232, 240, 0.3);
+}
+
+/* Tier 5: Diamond */
+.cardDiamond {
+    --tier-color: #06b6d4;
+    /* Cyan/Teal Diamond */
+    --tier-glow: rgba(6, 182, 212, 0.5);
+    --tier-bg: #083344;
+}
+
+.cardDiamond .cardContentCore {
+    border-color: rgba(6, 182, 212, 0.4);
+}
+
+/* Tier 6: Lonsdaleite (Hologram Transparent) */
+.cardLonsdaleite {
+    --tier-color: #d8b4fe;
+    /* Light Purple base */
+    --tier-glow: rgba(216, 180, 254, 0.6);
+    --tier-bg: #111;
+}
+
+.cardLonsdaleite .cardContentCore {
+    border-color: rgba(255, 255, 255, 0.5);
+    border-style: double;
+}
+
+/* Hologram effect override */
+.cardLonsdaleite:hover {
+    background: linear-gradient(135deg, rgba(255, 0, 0, 0.1), rgba(0, 255, 0, 0.1), rgba(0, 0, 255, 0.1));
+    animation: hologram 3s infinite linear;
+}
+
+/* Tier 7: Tanzanite (Royal Violet) */
+.cardTanzanite {
+    --tier-color: #7c3aed;
+    /* Violet */
+    --tier-glow: rgba(124, 58, 237, 0.6);
+    --tier-bg: #2e1065;
+}
+
+.cardTanzanite .cardContentCore {
+    border-color: rgba(124, 58, 237, 0.5);
+}
+
+/* Tier 8: Painite (Deep Crimson) */
+.cardPainite {
+    --tier-color: #ef4444;
+    /* Red */
+    --tier-glow: rgba(239, 68, 68, 0.6);
+    --tier-bg: #450a0a;
+}
+
+.cardPainite .cardContentCore {
+    border-color: rgba(239, 68, 68, 0.5);
+}
+
+/* Tier 9: Pallasite (Metallic Lime) */
+.cardPallasite {
+    --tier-color: #84cc16;
+    /* Lime */
+    --tier-glow: rgba(132, 204, 22, 0.6);
+    --tier-bg: #1a2e05;
+}
+
+.cardPallasite .cardContentCore {
+    border-color: rgba(132, 204, 22, 0.5);
+}
+
+/* Tier 10: Hibonite (Cosmic Azure) */
+.cardHibonite {
+    --tier-color: #3b82f6;
+    /* Azure Blue */
+    --tier-glow: rgba(59, 130, 246, 0.8);
+    --tier-bg: #172554;
+}
+
+.cardHibonite .cardContentCore {
+    border-color: rgba(59, 130, 246, 0.6);
+}
+
+/* Hibonite Stars */
+.cardHibonite::after {
+    box-shadow: 0 0 20px #fff;
+    background: #fff;
+}
+
+
+/* Level Badge - Embedded in top corner like a stat indicator */
+.levelBadge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 20px;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--tier-color);
+    padding: 4px 10px;
+    min-width: 40px;
+    /* Chamfered corners via clip-path */
+    clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%);
+    z-index: 5;
+}
+
+.levelLabel {
+    font-size: 0.6rem;
+    color: var(--tier-color);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 0;
+    margin-bottom: 2px;
+}
+
+.levelValue {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+    text-shadow: 0 0 10px var(--tier-glow);
+}
+
+/* Content Layout */
+.cardHeader {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 2;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .cardIcon {
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
-    background: #f4f4f5;
+    width: 52px;
+    height: 52px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--tier-color);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
+    color: var(--tier-color);
+    /* Rotate 45deg for diamond shape matching ref */
+    transform: rotate(45deg);
+    margin-left: 10px;
 }
 
-.cardMenuBtn {
-    color: #a1a1aa;
-    font-size: 1.2rem;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.card:hover .cardMenuBtn {
-    opacity: 1;
+/* Counter-rotate icon content so it's upright */
+.cardIcon>* {
+    transform: rotate(-45deg);
 }
 
 .cardTitle {
-    font-size: 1.35rem;
+    text-align: left;
+    font-family: 'Cinzel', serif;
+    /* Fantasy font fallback */
+    font-size: 1.25rem;
     font-weight: 700;
-    color: #111;
-    margin-bottom: 8px;
-    line-height: 1.3;
+    color: #f1f5f9;
+    letter-spacing: 0.02em;
+    margin-left: 12px;
+    margin-bottom: 0;
 }
 
+.categoryTag {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    color: var(--tier-color);
+    border: 1px solid var(--tier-color);
+    margin-top: 4px;
+    margin-left: 12px;
+    opacity: 0.8;
+}
+
+/* Meta Section */
 .cardMeta {
-    font-size: 0.9rem;
-    color: #666;
-    margin-bottom: 24px;
+    margin: 0;
+    justify-content: flex-start;
 }
 
-.progressBar {
-    width: 100%;
-    height: 6px;
-    background: #f0f0f0;
-    border-radius: 999px;
-    overflow: hidden;
+/* EXP Bar - "Diamond Tipped" Ref 1 */
+.progressContainer {
     margin-top: auto;
+    z-index: 2;
+    position: relative;
+    padding-top: 24px;
+    border-top: none;
+}
+
+.progressLabel {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 8px;
+    font-family: monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* The Line Container */
+.progressBar {
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    position: relative;
+    display: flex;
+    align-items: center;
+    overflow: visible;
+    /* Allow diamond to protrude */
+    border: none;
+    border-radius: 0;
+}
+
+/* Start Diamond */
+.progressBar::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    width: 6px;
+    height: 6px;
+    background: var(--tier-color);
+    transform: rotate(45deg);
+}
+
+/* End Diamond (Total) */
+.progressBar::after {
+    content: '';
+    position: absolute;
+    right: -4px;
+    width: 6px;
+    height: 6px;
+    border: 1px solid var(--tier-color);
+    background: #111;
+    transform: rotate(45deg);
 }
 
 .progressFill {
-    height: 100%;
-    background: #111;
-    border-radius: 999px;
-    transition: width 1s ease-out;
+    height: 2px;
+    background: var(--tier-color);
+    position: relative;
+    box-shadow: 0 0 10px var(--tier-glow);
+    border-radius: 0;
 }
 
-/* Create New Card */
+/* The Leading Diamond Knob */
+.progressFill::after {
+    content: '';
+    position: absolute;
+    right: -3px;
+    /* Center on tip */
+    top: -2px;
+    /* Center vertically (2px height line -> top -2 makes 6px center) */
+    width: 6px;
+    height: 6px;
+    background: var(--tier-color);
+    border: 1px solid #fff;
+    transform: rotate(45deg);
+    box-shadow: 0 0 5px var(--tier-color);
+}
+
+/* Create New Card - Create Card remains same */
 .createCard {
-    background: #f9f9f9;
-    border: 2px dashed #e4e4e7;
+    background: #0f1014;
+    border: 2px dashed rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.5);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 16px;
-    color: #71717a;
-    transition: all 0.3s;
+    min-height: 220px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.createCard::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.5;
+    z-index: 0;
+    pointer-events: none;
 }
 
 .createCard:hover {
-    border-color: #111;
-    color: #111;
-    background: #fff;
+    border-color: #3b82f6;
+    background: #1a1a20;
+    color: #e2e8f0;
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.1);
+    transform: translateY(-4px);
 }
 
-.plusIcon {
-    font-size: 2.5rem;
-    font-weight: 300;
+.createCard .plusIcon {
+    font-size: 3rem;
+    transition: transform 0.3s ease;
+    z-index: 1;
+}
+
+.createCard:hover .plusIcon {
+    transform: scale(1.1) rotate(90deg);
+    color: #3b82f6;
 }
 
 .createText {
     font-weight: 600;
     font-size: 1.1rem;
+    z-index: 1;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
 }
 
-/* Animations */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes slideUpFade {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes cardEnter {
-    from {
-        opacity: 0;
-        transform: translateY(30px) scale(0.95);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+.createCard::after {
+    display: none;
 }

@@ -7,6 +7,7 @@ import { loginSchema, signupSchema, LoginInput, SignupInput } from '@/lib/valida
 import { FaEye, FaEyeSlash, FaTimes } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 import styles from './AuthModal.module.css'; // Import generic CSS
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -19,71 +20,104 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
-    if (!isOpen) return null;
-
     return (
-        <div className={styles.overlay}>
-            <div className={styles.modal}>
-                {/* Close Button */}
-                <button onClick={onClose} className={styles.closeButton}>
-                    <FaTimes size={20} />
-                </button>
-
-                {/* Header */}
-                <div className={styles.header}>
-                    <h2 className={styles.title}>
-                        {isLoginMode ? 'Welcome Back' : 'Create Account'}
-                    </h2>
-                    <p className={styles.subtitle}>
-                        {isLoginMode ? '성장을 위한 여정을 계속하세요.' : '새로운 성장의 시작을 함께해요.'}
-                    </p>
-                </div>
-
-                {/* Error Message */}
-                {errorMsg && (
-                    <div className={styles.errorMessage}>
-                        {errorMsg}
-                    </div>
-                )}
-
-                {/* Forms */}
-                {isLoginMode ? (
-                    <LoginForm
-                        onError={setErrorMsg}
-                        setIsLoading={setIsLoading}
-                        isLoading={isLoading}
-                        onSuccess={() => {
-                            onClose();
-                            router.push('/dashboard');
-                        }}
-                    />
-                ) : (
-                    <SignupForm
-                        onError={setErrorMsg}
-                        setIsLoading={setIsLoading}
-                        isLoading={isLoading}
-                        onSuccess={() => {
-                            alert('회원가입이 완료되었습니다! 로그인해주세요.');
-                            setIsLoginMode(true);
-                        }}
-                    />
-                )}
-
-                {/* Toggle Mode */}
-                <div className={styles.toggleArea}>
-                    {isLoginMode ? '계정이 없으신가요?' : '이미 계정이 있으신가요?'}
-                    <button
-                        onClick={() => {
-                            setIsLoginMode(!isLoginMode);
-                            setErrorMsg(null);
-                        }}
-                        className={styles.toggleButton}
+        <AnimatePresence>
+            {isOpen && (
+                <motion.div
+                    className={styles.overlay}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={onClose} // Close on backdrop click
+                >
+                    <motion.div
+                        className={styles.modal}
+                        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                        transition={{ type: "spring", duration: 0.5 }}
+                        onClick={(e: React.MouseEvent) => e.stopPropagation()} // Prevent closing when clicking modal
                     >
-                        {isLoginMode ? '회원가입' : '로그인'}
-                    </button>
-                </div>
-            </div>
-        </div>
+                        {/* Close Button */}
+                        <button onClick={onClose} className={styles.closeButton}>
+                            <FaTimes size={20} />
+                        </button>
+
+                        {/* Header */}
+                        <div className={styles.header}>
+                            <h2 className={styles.title}>
+                                {isLoginMode ? 'Welcome Back' : 'Create Account'}
+                            </h2>
+                            <p className={styles.subtitle}>
+                                {isLoginMode ? '성장을 위한 여정을 계속하세요.' : '새로운 성장의 시작을 함께해요.'}
+                            </p>
+                        </div>
+
+                        {/* Error Message */}
+                        {errorMsg && (
+                            <div className={styles.errorMessage}>
+                                {errorMsg}
+                            </div>
+                        )}
+
+                        {/* Forms */}
+                        <AnimatePresence mode="wait">
+                            {isLoginMode ? (
+                                <motion.div
+                                    key="login"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 20 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <LoginForm
+                                        onError={setErrorMsg}
+                                        setIsLoading={setIsLoading}
+                                        isLoading={isLoading}
+                                        onSuccess={() => {
+                                            onClose();
+                                            router.push('/dashboard');
+                                        }}
+                                    />
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="signup"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <SignupForm
+                                        onError={setErrorMsg}
+                                        setIsLoading={setIsLoading}
+                                        isLoading={isLoading}
+                                        onSuccess={() => {
+                                            alert('회원가입이 완료되었습니다! 로그인해주세요.');
+                                            setIsLoginMode(true);
+                                        }}
+                                    />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Toggle Mode */}
+                        <div className={styles.toggleArea}>
+                            {isLoginMode ? '계정이 없으신가요?' : '이미 계정이 있으신가요?'}
+                            <button
+                                onClick={() => {
+                                    setIsLoginMode(!isLoginMode);
+                                    setErrorMsg(null);
+                                }}
+                                className={styles.toggleButton}
+                            >
+                                {isLoginMode ? '회원가입' : '로그인'}
+                            </button>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
     );
 }
 
