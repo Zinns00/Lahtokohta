@@ -41,7 +41,10 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className={styles.logo}>Lahtokohta</div>
+          <div className={styles.logo} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <img src="/latokohta_logo.png" alt="Logo" style={{ width: '54px', height: '54px', mixBlendMode: 'multiply' }} />
+            Lahtokohta
+          </div>
           <nav className={styles.nav}>
             <a href="#" className={styles.navLink}>워크스페이스</a>
             <a href="#" className={styles.navLink}>챌린지</a>
@@ -263,7 +266,10 @@ export default function Home() {
           <div className={styles.container}>
             <div className={styles.footerGrid}>
               <div className={styles.footerCol}>
-                <div className={styles.logo} style={{ marginBottom: '1.5rem' }}>Lahtokohta</div>
+                <div className={styles.logo} style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <img src="/latokohta_logo.png" alt="Logo" style={{ width: '54px', height: '54px', mixBlendMode: 'multiply' }} />
+                  Lahtokohta
+                </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                   <FaFacebookF /> <FaInstagram /> <FaTwitter /> <FaYoutube />
                 </div>

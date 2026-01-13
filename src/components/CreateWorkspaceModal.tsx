@@ -40,6 +40,14 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
         end: ''
     });
 
+    const [viewDate, setViewDate] = useState(new Date());
+
+    useEffect(() => {
+        if (formData.startDate) {
+            setViewDate(formData.startDate);
+        }
+    }, [formData.startDate]);
+
     // Reset state when modal opens
     useEffect(() => {
         if (isOpen) {
@@ -174,7 +182,7 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
         setDateInputStr(prev => ({ ...prev, end: formatDate(end) }));
     };
 
-    const handleDateChange = (dates: Date | null | [Date | null, Date | null]) => {
+    const handleDateChange = (dates: any) => {
         if (Array.isArray(dates)) {
             const [start, end] = dates;
             if (start) {
@@ -356,13 +364,15 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
                                 <div className={styles.calendarWrapper}>
                                     <DatePicker
                                         selected={formData.startDate}
-                                        onChange={handleDateChange}
+                                        onChange={handleDateChange as any}
                                         startDate={formData.startDate}
                                         endDate={isEndDateEnabled ? formData.endDate : null}
-                                        selectsRange={isEndDateEnabled}
+                                        selectsRange={isEndDateEnabled as any}
                                         inline
                                         locale={ko}
                                         dateFormat="yyyy.MM.dd"
+                                        openToDate={formData.startDate}
+                                        key={formData.startDate ? formData.startDate.toISOString().slice(0, 7) : 'init'}
                                     />
                                 </div>
                             </motion.div>

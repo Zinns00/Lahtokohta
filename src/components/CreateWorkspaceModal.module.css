@@ -434,9 +434,17 @@ input:checked+.slider:before {
     border-radius: 10px;
     margin: 0.2rem;
     font-size: 0.95rem;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid transparent;
-    outline: none;
+    border: 1px solid transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.calendarWrapper :global(.react-datepicker__day:focus),
+.calendarWrapper :global(.react-datepicker__day:active) {
+    outline: none !important;
+    box-shadow: none !important;
+    /* Don't force bg transparent here blindly, as it might be selected. 
+       Just kill the outline. */
 }
 
 /* Hover Effect */
@@ -458,6 +466,8 @@ input:checked+.slider:before {
     background-color: transparent !important;
     border: none !important;
     color: inherit;
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 /* Range Selection (In-between dates) */
@@ -471,6 +481,7 @@ input:checked+.slider:before {
 /* Selected, Range Start/End (Strong Highlight) */
 .calendarWrapper :global(.react-datepicker__day--selected),
 .calendarWrapper :global(.react-datepicker__day--range-start),
+.calendarWrapper :global(.react-datepicker__day--selecting-range-start),
 .calendarWrapper :global(.react-datepicker__day--range-end) {
     background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
     color: #ffffff !important;
@@ -482,7 +493,8 @@ input:checked+.slider:before {
 }
 
 /* Fix corners for range */
-.calendarWrapper :global(.react-datepicker__day--range-start) {
+.calendarWrapper :global(.react-datepicker__day--range-start),
+.calendarWrapper :global(.react-datepicker__day--selecting-range-start) {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
     border-top-left-radius: 10px;

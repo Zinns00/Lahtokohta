@@ -127,8 +127,8 @@ export default function DashboardPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
             >
-                <div className={styles.logo}>
-                    <FiZap style={{ color: '#111' }} />
+                <div className={styles.logo} style={{ gap: '12px' }}>
+                    <img src="/latokohta_logo.png" alt="Logo" style={{ width: '54px', height: '54px', mixBlendMode: 'multiply' }} />
                     Lahtokohta
                 </div>
 
