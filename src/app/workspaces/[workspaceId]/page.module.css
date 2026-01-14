@@ -1,0 +1,318 @@
+/* Global Layout */
+.container {
+    height: 100vh;
+    /* Force full viewport height */
+    background-color: #09090b;
+    color: #e4e4e7;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* No scroll on container */
+}
+
+/* 1. Slim Header (Compact HUD) */
+.headerHud {
+    height: 64px;
+    /* Fixed Slim Height */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1.5rem;
+    background: rgba(24, 24, 27, 0.8);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+}
+
+.hudLeft {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Workspace Logo Style (Based on Image 1) */
+.workspaceLogo {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    border-radius: 8px;
+    /* Soft Square */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 10px rgba(245, 158, 11, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.workspaceTitle {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    /* Space between Title and Tags */
+    padding-left: 4px;
+    /* Slight separation from Icon */
+}
+
+.workspaceTitle h1 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin: 0;
+    color: #fff;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+}
+
+.metaRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Add labels for clarity using pseudo-elements or just cleaner style */
+.metaBadge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #27272a;
+    color: #a1a1aa;
+    font-weight: 500;
+    border: 1px solid #3f3f46;
+}
+
+/* Optional: Add icon/dot to distinguish category/difficulty visually */
+.metaBadge::before {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #71717a;
+}
+
+.difficultyBadge {
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.3);
+    background: rgba(251, 191, 36, 0.05);
+}
+
+.difficultyBadge::before {
+    background: #fbbf24;
+    /* Dot color for difficulty */
+    box-shadow: 0 0 4px #fbbf24;
+}
+
+.hudRight {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+/* Gamified Streak Badge */
+.streakBadge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%);
+    border: 1px solid rgba(249, 115, 22, 0.2);
+    border-radius: 20px;
+    color: #fbbf24;
+    font-weight: 700;
+    font-size: 0.85rem;
+    box-shadow: 0 0 10px rgba(249, 115, 22, 0.1);
+}
+
+/* Designer Profile */
+.profileContainer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 1rem;
+    border-left: 1px solid #27272a;
+}
+
+.profileInfo {
+    text-align: right;
+    line-height: 1.2;
+}
+
+.profileName {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.levelBarContainer {
+    width: 60px;
+    height: 4px;
+    background: #27272a;
+    border-radius: 2px;
+    margin-top: 2px;
+    overflow: hidden;
+    position: relative;
+}
+
+.levelBarFill {
+    width: 70%;
+    /* Mock Value */
+    height: 100%;
+    background: #fbbf24;
+    border-radius: 2px;
+}
+
+.avatarFrame {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    /* Squircle */
+    background: #27272a;
+    border: 2px solid #3f3f46;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.avatarLevelTag {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    background: #fbbf24;
+    color: #000;
+    font-size: 0.6rem;
+    font-weight: 800;
+    padding: 1px 4px;
+    border-radius: 4px;
+    border: 1px solid #000;
+}
+
+/* 2. Compact Sidebar & Layout */
+.mainLayout {
+    display: flex;
+    flex: 1;
+    /* Grow to fill remaining space in .container */
+    height: 100%;
+    /* Fill container height */
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 200px;
+    background: #0d0d0f;
+    border-right: 1px solid #27272a;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 1rem;
+    gap: 0.5rem;
+    height: 100%;
+    /* Stretch to full height of parent */
+    /* No min-height: 0 restriction */
+}
+
+/* Spacer to push content down */
+.spacer {
+    flex: 1;
+}
+
+.sidebarDivider {
+    height: 1px;
+    background: #27272a;
+    margin: 0.5rem 0;
+    width: 100%;
+}
+
+.backButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    margin-top: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #71717a;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.backButton:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.sideTab {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: #71717a;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.sideTab:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
+.activeSideTab {
+    background: linear-gradient(90deg, rgba(251, 191, 36, 0.15) 0%, transparent 100%);
+    color: #fbbf24;
+    border-left: 3px solid #fbbf24;
+    border-radius: 0 8px 8px 0;
+    /* Only right side rounded */
+}
+
+/* Content Area */
+.contentArea {
+    flex: 1;
+    background: #101012;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.pageHeader {
+    margin-bottom: 2rem;
+}
+
+.pageHeader h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.25rem;
+}
+
+.pageHeader p {
+    color: #71717a;
+    font-size: 0.9rem;
+}
+
+.loading {
+    display: flex;
+    /* Fix syntax error from previous: just display flex is enough */
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: #71717a;
+    background: #09090b;
+}

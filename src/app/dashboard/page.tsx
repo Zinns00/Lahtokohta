@@ -235,6 +235,7 @@ export default function DashboardPage() {
                                     translateY: -5,
                                 }}
                                 whileTap={{ scale: 0.98 }}
+                                onClick={() => router.push(`/workspaces/${workspace.id}`)}
                             >
                                 <div className={styles.cardContentCore} />
 

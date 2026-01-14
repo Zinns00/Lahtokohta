@@ -38,6 +38,14 @@ model Workspace {
   level       Int      @default(1)
   currentXP   Int      @default(0)
   
+  // Time & Goals
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+  minStudyHours Int    @default(0)
+  
+  // Gamification (Local)
+  streak      Int      @default(0)
+  
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
@@ -52,7 +60,11 @@ model Task {
   id          Int      @id @default(autoincrement())
   content     String
   isDone      Boolean  @default(false)
-  xpReward    Int      @default(10) // XP reward for completing this task
+  xpReward    Int      @default(10)
+  
+  // New Features for MVP
+  type        String   @default("PERSONAL") // 'TEAM' | 'PERSONAL'
+  priority    String   @default("MEDIUM")   // 'HIGH' | 'MEDIUM' | 'LOW'
   
   workspaceId Int
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)

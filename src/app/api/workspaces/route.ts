@@ -36,27 +36,19 @@ export async function POST(req: Request) {
                 title: data.title,
                 color: data.color || 'bronze',
                 description: data.description || '',
-                // If your schema expects 'category', ensure it maps here. 
-                // Note: Schema might use 'difficulty' or 'category'. Checking your previous edits, file 'schema.prisma' had 'difficulty'.
-                // Assuming 'category' maps to 'difficulty' or just string.
                 category: data.category || 'General',
+                difficulty: data.difficulty,
 
                 // Map Date strings to Date objects
-                // In schema these were likely NOT defined yet in detail.
-                // Reverting to basic schema assumptions:
-                // title, description, user relation.
+                startDate: data.startDate ? new Date(data.startDate) : new Date(),
+                endDate: data.endDate ? new Date(data.endDate) : null,
+                minStudyHours: data.minStudyHours || 0,
 
                 // Relation to User
                 user: {
                     connect: { id: user.userId as string }
                 },
-
-                // Additional fields based on previous manual CREATE TABLE:
-                // min_study_hours -> minStudyHours if in schema?
-                // For now, let's stick to what we know is in schema or will work.
-                // If schema doesn't have these fields, Prisma will yell.
-                // But since we control schema, we assume standard fields.
-            }
+            } as any
         });
 
         return NextResponse.json(newWorkspace, { status: 201 });
