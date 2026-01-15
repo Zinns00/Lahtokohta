@@ -107,7 +107,7 @@ export default function DashboardPage() {
     const getIconByCategory = (cat: string) => {
         switch (cat) {
             case 'Health': return <FiActivity />;
-            case 'Study': return <FiCode />;
+            case 'Study': return <FiBook />;
             case 'Project': return <FiBriefcase />;
             case 'Hobby': return <FiHeart />;
             default: return <FiBook />;

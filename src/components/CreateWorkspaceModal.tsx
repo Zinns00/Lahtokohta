@@ -298,15 +298,15 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
                                             className={`${styles.selectTrigger} ${isCategoryOpen ? styles.selectOpen : ''}`}
                                             onMouseDown={(e) => {
                                                 e.stopPropagation();
-                                                e.nativeEvent.stopImmediatePropagation();
+                                                // Prevent default behavior if necessary but allow focus
                                             }}
                                             onClick={() => setIsCategoryOpen(!isCategoryOpen)}
                                         >
                                             <span className={styles.selectedValue}>
-                                                {formData.category === 'Study' && '🎓 Academic (학습)'}
-                                                {formData.category === 'Project' && '⚡ Project (프로젝트)'}
-                                                {formData.category === 'Health' && '🧘 Wellness (건강)'}
-                                                {formData.category === 'Hobby' && '🎨 Creative (취미)'}
+                                                {formData.category === 'Study' && '📚 Academic (학습)'}
+                                                {formData.category === 'Project' && '🚀 Project (프로젝트)'}
+                                                {formData.category === 'Health' && '🌿 Wellness (건강)'}
+                                                {formData.category === 'Hobby' && '🎨 Hobby (취미)'}
                                             </span>
                                             <FiChevronRight className={`${styles.selectArrow} ${isCategoryOpen ? styles.rotateArrow : ''}`} />
                                         </div>
@@ -319,22 +319,19 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
                                                     animate={{ opacity: 1, y: 0 }}
                                                     exit={{ opacity: 0, y: -10 }}
                                                     transition={{ duration: 0.2 }}
-                                                    onMouseDown={(e) => {
-                                                        e.stopPropagation();
-                                                        e.nativeEvent.stopImmediatePropagation();
-                                                    }}
                                                 >
                                                     {[
-                                                        { val: 'Study', label: '🎓 Academic (학습)' },
-                                                        { val: 'Project', label: '⚡ Project (프로젝트)' },
-                                                        { val: 'Health', label: '🧘 Wellness (건강)' },
-                                                        { val: 'Hobby', label: '🎨 Creative (취미)' }
+                                                        { val: 'Study', label: '📚 Academic (학습)' },
+                                                        { val: 'Project', label: '🚀 Project (프로젝트)' },
+                                                        { val: 'Health', label: '🌿 Wellness (건강)' },
+                                                        { val: 'Hobby', label: '🎨 Hobby (취미)' }
                                                     ].map((opt) => (
                                                         <div
                                                             key={opt.val}
                                                             className={`${styles.selectOption} ${formData.category === opt.val ? styles.selectedOption : ''}`}
-                                                            onClick={() => {
-                                                                setFormData({ ...formData, category: opt.val });
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setFormData(prev => ({ ...prev, category: opt.val }));
                                                                 setIsCategoryOpen(false);
                                                             }}
                                                         >

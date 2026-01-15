@@ -780,7 +780,7 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
                         <div style={{ padding: '1.5rem', flex: 1 }}>
                             <div style={{
                                 minHeight: '100px', color: '#d1d5db', lineHeight: 1.6, fontSize: '1rem',
-                                whiteSpace: 'pre-wrap', marginBottom: '2rem'
+                                whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', marginBottom: '2rem'
                             }}>
                                 {selectedPost.content || "상세 내용이 없습니다."}
                             </div>
@@ -856,7 +856,7 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
                         <div style={{ padding: '1.5rem', flex: 1 }}>
                             <div style={{
                                 minHeight: '100px', color: '#d1d5db', lineHeight: 1.6, fontSize: '1rem',
-                                whiteSpace: 'pre-wrap', marginBottom: '2rem'
+                                whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', marginBottom: '2rem'
                             }}>
                                 {selectedItem.content || "상세 내용이 없습니다."}
                             </div>
