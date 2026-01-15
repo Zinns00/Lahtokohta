@@ -199,6 +199,8 @@ export default function WorkspaceDetailPage() {
                                 </div>
                                 <AttendanceSection
                                     streak={workspace.streak}
+                                    startDate={workspace.startDate}
+                                    endDate={workspace.endDate}
                                     attendances={workspace.attendances || []}
                                 />
                             </motion.div>
