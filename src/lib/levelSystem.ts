@@ -1,10 +1,10 @@
 export type UserTitle =
-    | 'Explorer'
-    | 'Pioneer'
-    | 'Navigator'
-    | 'Conqueror'
-    | 'Transcendent'
-    | 'Endgame';
+    | '탐험가'
+    | '개척자'
+    | '항해사'
+    | '정복자'
+    | '초월자'
+    | '마스터';
 
 export interface LevelInfo {
     level: number;
@@ -43,26 +43,26 @@ export function getUserLevelInfo(totalXP: number): LevelInfo {
         }
     }
 
-    let title: UserTitle = 'Explorer';
+    let title: UserTitle = '탐험가';
     let badge = '🔭'; // Telescope
 
     if (level >= 1 && level <= 19) {
-        title = 'Explorer';
+        title = '탐험가';
         badge = '🔭';
     } else if (level >= 20 && level <= 39) {
-        title = 'Pioneer';
+        title = '개척자';
         badge = '🚩';
     } else if (level >= 40 && level <= 69) {
-        title = 'Navigator';
+        title = '항해사';
         badge = '🧭';
     } else if (level >= 70 && level <= 79) {
-        title = 'Conqueror';
+        title = '정복자';
         badge = '👑';
     } else if (level >= 80 && level <= 99) {
-        title = 'Transcendent';
+        title = '초월자';
         badge = '💠';
     } else if (level >= 100) {
-        title = 'Endgame';
+        title = '마스터';
         badge = '🪐';
     }
 

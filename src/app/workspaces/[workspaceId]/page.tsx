@@ -26,7 +26,7 @@ export default function WorkspaceDetailPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     // UI State
-    const [activeTab, setActiveTab] = useState<Tab>('CURRICULUM');
+    const [activeTab, setActiveTab] = useState<Tab>('ATTENDANCE');
 
     useEffect(() => {
         if (workspaceId) {
@@ -105,6 +105,7 @@ export default function WorkspaceDetailPage() {
 
                     {/* Designer Profile with XP Bar */}
                     <div className={styles.profileContainer}>
+                        {/* Name & XP Bar (Left) */}
                         <div className={styles.profileInfo}>
                             <span className={styles.profileName}>
                                 {workspace.user?.username || 'User'}
@@ -114,12 +115,16 @@ export default function WorkspaceDetailPage() {
                                 <div className={styles.levelBarFill} style={{ width: '65%' }}></div>
                             </div>
                         </div>
-                        <div className={styles.avatarFrame}>
-                            {/* Initial */}
-                            <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#e4e4e7' }}>
-                                {workspace.user?.username?.[0]?.toUpperCase() || 'U'}
-                            </span>
-                            <div className={styles.avatarLevelTag}>
+
+                        {/* Avatar & Level Badge (Right) */}
+                        <div className={styles.avatarWrapper}>
+                            <div className={styles.avatarFrame}>
+                                {/* Initial */}
+                                <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#e4e4e7' }}>
+                                    {workspace.user?.username?.[0]?.toUpperCase() || 'U'}
+                                </span>
+                            </div>
+                            <div className={styles.levelBadgeDesign}>
                                 {workspace.level}
                             </div>
                         </div>

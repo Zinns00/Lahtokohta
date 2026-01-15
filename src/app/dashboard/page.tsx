@@ -6,6 +6,8 @@ import { FiPlus, FiActivity, FiBook, FiCode, FiZap, FiGrid, FiBriefcase, FiHeart
 import { motion, Variants } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import CreateWorkspaceModal from '@/components/CreateWorkspaceModal';
+import ProfileSettingsModal from '@/components/ProfileSettingsModal';
+import { getUserLevelInfo } from '@/lib/levelSystem';
 
 const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -30,19 +32,15 @@ const itemVariants: Variants = {
     }
 };
 
-interface LevelInfo {
-    level: number;
-    title: string;
-    badge: string;
-    nextLevelXP: number;
-    progress: number;
-}
-
 interface User {
     id: string;
     username: string;
     email: string;
-    levelInfo?: LevelInfo;
+    image?: string;
+    bio?: string;
+    totalXP: number;
+    title?: string;
+    equippedFrame?: string;
 }
 
 interface Workspace {
@@ -62,6 +60,7 @@ export default function DashboardPage() {
     const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
     const router = useRouter();
 
     const fetchWorkspaces = useCallback(async () => {
@@ -71,9 +70,8 @@ export default function DashboardPage() {
                 const data = await res.json();
                 const mapped = data.map((ws: any) => ({
                     ...ws,
-                    progress: ws.progress || 0, // Should come from DB logic later
+                    progress: ws.progress || 0,
                     level: ws.level || 1,
-                    // Map difficulty/level to color logic if needed, or keep existing
                     color: ws.color || 'bronze'
                 }));
                 setWorkspaces(mapped);
@@ -83,26 +81,28 @@ export default function DashboardPage() {
         }
     }, []);
 
-    useEffect(() => {
-        const fetchUserAndWorkspaces = async () => {
-            try {
-                const res = await fetch('/api/me');
-                if (!res.ok) {
-                    throw new Error('Not authenticated');
-                }
+    const fetchUser = useCallback(async () => {
+        try {
+            const res = await fetch('/api/user/me');
+            if (res.ok) {
                 const data = await res.json();
-                setUser(data.user);
-                await fetchWorkspaces();
-            } catch (error) {
-                console.error('Failed to fetch user:', error);
-                router.push('/');
-            } finally {
-                setIsLoading(false);
+                setUser(data);
+            } else {
+                throw new Error('Not authenticated');
             }
-        };
+        } catch (error) {
+            console.error('Failed to fetch user:', error);
+            router.push('/');
+        }
+    }, [router]);
 
-        fetchUserAndWorkspaces();
-    }, [router, fetchWorkspaces]);
+    useEffect(() => {
+        const init = async () => {
+            await Promise.all([fetchUser(), fetchWorkspaces()]);
+            setIsLoading(false);
+        };
+        init();
+    }, [fetchUser, fetchWorkspaces]);
 
     const getIconByCategory = (cat: string) => {
         switch (cat) {
@@ -122,6 +122,10 @@ export default function DashboardPage() {
         return <div className={styles.container} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>Loading...</div>;
     }
 
+    const levelInfo = user ? getUserLevelInfo(user.totalXP) : { level: 1, title: '탐험가', badge: '🔭' };
+    // Use equipped title if available, otherwise calculated title
+    const displayTitle = user?.title || levelInfo.title;
+
     return (
         <div className={styles.container}>
             <CreateWorkspaceModal
@@ -131,6 +135,17 @@ export default function DashboardPage() {
                     fetchWorkspaces();
                 }}
             />
+
+            {user && (
+                <ProfileSettingsModal
+                    isOpen={isProfileSettingsOpen}
+                    onClose={() => setIsProfileSettingsOpen(false)}
+                    user={user}
+                    onSuccess={() => {
+                        fetchUser(); // Refresh user data
+                    }}
+                />
+            )}
 
             {/* Navbar */}
             <motion.nav
@@ -144,18 +159,21 @@ export default function DashboardPage() {
                     Lähtökohta
                 </div>
 
-                <div className={styles.profileSection}>
+                <div className={styles.profileSection} onClick={() => setIsProfileSettingsOpen(true)} style={{ cursor: 'pointer' }}>
                     <div className={styles.userProfile}>
                         <div className={styles.userInfo}>
                             <span className={styles.userName}>{user?.username || '게스트'}</span>
                             <span className={styles.userTitle}>
-                                {user?.levelInfo
-                                    ? `Lv.${user.levelInfo.level} ${user.levelInfo.title} ${user.levelInfo.badge}`
-                                    : 'Lv.1 탐험가 🔭'}
+                                {`Lv.${levelInfo.level} ${displayTitle} ${levelInfo.badge}`}
                             </span>
-                            {/* Optional: Add a mini XP bar here if desired */}
                         </div>
-                        <div className={styles.avatar}>{user?.username ? getInitials(user.username) : 'G'}</div>
+                        <div className={`${styles.avatar} ${styles[`frame${user?.equippedFrame || 'Explorer'}`]}`}>
+                            {user?.image ? (
+                                <img src={user.image} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                user?.username ? getInitials(user.username) : 'G'
+                            )}
+                        </div>
                     </div>
                 </div>
             </motion.nav>

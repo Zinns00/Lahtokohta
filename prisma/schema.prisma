@@ -13,9 +13,11 @@ model User {
   email     String      @unique
   password  String
   image     String?
+  bio       String?     // Short bio or status message
   
   // Account Level System
-  title     String?     // e.g. 'Explorer', 'Conqueror'
+  title     String?     // Equipped Title (e.g. 'Explorer')
+  equippedFrame String? // Equipped Border ID
   totalXP   Int         @default(0)
   
   workspaces Workspace[]
