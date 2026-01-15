@@ -132,18 +132,18 @@ export default function WorkspaceDetailPage() {
                 {/* Vertical GNB (Korean) */}
                 <nav className={styles.sidebar}>
                     <button
-                        className={`${styles.sideTab} ${activeTab === 'CURRICULUM' ? styles.activeSideTab : ''}`}
-                        onClick={() => setActiveTab('CURRICULUM')}
-                    >
-                        <FiCheckSquare size={18} />
-                        <span>커리큘럼</span>
-                    </button>
-                    <button
                         className={`${styles.sideTab} ${activeTab === 'ATTENDANCE' ? styles.activeSideTab : ''}`}
                         onClick={() => setActiveTab('ATTENDANCE')}
                     >
                         <FiUserCheck size={18} />
                         <span>출석부</span>
+                    </button>
+                    <button
+                        className={`${styles.sideTab} ${activeTab === 'CURRICULUM' ? styles.activeSideTab : ''}`}
+                        onClick={() => setActiveTab('CURRICULUM')}
+                    >
+                        <FiCheckSquare size={18} />
+                        <span>커리큘럼</span>
                     </button>
                     {/* Stats removed for MVP cleanliness */}
 
