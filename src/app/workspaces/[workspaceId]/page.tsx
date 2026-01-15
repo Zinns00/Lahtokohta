@@ -14,6 +14,7 @@ import { FaFire, FaBolt } from "react-icons/fa";
 // Separate components import
 import CurriculumSection from './components/CurriculumSection';
 import AttendanceSection from './components/AttendanceSection';
+import { getUserLevelInfo } from '@/lib/levelSystem';
 
 type Tab = 'CURRICULUM' | 'ATTENDANCE';
 
@@ -75,6 +76,10 @@ export default function WorkspaceDetailPage() {
     if (isLoading) return <div className={styles.loading}>Accessing Workspace...</div>;
     if (!workspace) return null;
 
+
+
+    const userLevelInfo = workspace.user ? getUserLevelInfo(workspace.user.totalXP) : { level: 1, title: '탐험가', badge: '🔭', progress: 0 };
+
     return (
         <div className={styles.container}>
             {/* 1. Slim Compact HUD Header */}
@@ -104,28 +109,32 @@ export default function WorkspaceDetailPage() {
                     </div>
 
                     {/* Designer Profile with XP Bar */}
+                    {/* Designer Profile with XP Bar */}
                     <div className={styles.profileContainer}>
                         {/* Name & XP Bar (Left) */}
                         <div className={styles.profileInfo}>
                             <span className={styles.profileName}>
-                                {workspace.user?.username || 'User'}
+                                {workspace.user?.username || '게스트'}
                             </span>
                             {/* Visual XP Bar for Decoration */}
                             <div className={styles.levelBarContainer}>
-                                <div className={styles.levelBarFill} style={{ width: '65%' }}></div>
+                                <div className={styles.levelBarFill} style={{ width: `${userLevelInfo.progress}%` }}></div>
                             </div>
                         </div>
 
                         {/* Avatar & Level Badge (Right) */}
                         <div className={styles.avatarWrapper}>
                             <div className={styles.avatarFrame}>
-                                {/* Initial */}
-                                <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#e4e4e7' }}>
-                                    {workspace.user?.username?.[0]?.toUpperCase() || 'U'}
-                                </span>
+                                {workspace.user?.image ? (
+                                    <img src={workspace.user.image} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#e4e4e7' }}>
+                                        {workspace.user?.username?.[0]?.toUpperCase() || 'G'}
+                                    </span>
+                                )}
                             </div>
                             <div className={styles.levelBadgeDesign}>
-                                {workspace.level}
+                                {userLevelInfo.level}
                             </div>
                         </div>
                     </div>

@@ -41,6 +41,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ workspac
                 attendances: {
                     orderBy: { startTime: 'desc' },
                     take: 7
+                },
+                user: {
+                    select: {
+                        username: true,
+                        image: true,
+                        totalXP: true,
+                        title: true,
+                        equippedFrame: true
+                    }
                 }
             }
         });
