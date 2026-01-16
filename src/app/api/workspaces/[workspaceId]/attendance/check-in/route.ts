@@ -174,12 +174,12 @@ export async function POST(
             if (existingAttendance) {
                 attendance = await tx.attendance.update({
                     where: { id: existingAttendance.id },
-                    data: { startTime: start, endTime: end, durationMin, note: 'CHECK-IN' }
+                    data: { startTime: start, endTime: end, durationMin, note: '' }
                 });
             } else {
                 attendance = await tx.attendance.create({
                     data: {
-                        startTime: start, endTime: end, durationMin, workspaceId, note: 'CHECK-IN'
+                        startTime: start, endTime: end, durationMin, workspaceId, note: ''
                     }
                 });
             }
