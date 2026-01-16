@@ -377,9 +377,35 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
     const addRows = () => {
         const count = rowsToAdd === '' ? 1 : rowsToAdd;
         const newRows = [];
-        for (let i = 0; i < count; i++) {
-            newRows.push(new Array(columns.length).fill(''));
+
+        // Find the last valid date in the current rows to increment from
+        let lastDateObj = new Date(); // Default if no rows exist
+        let foundDate = false;
+
+        for (let i = rows.length - 1; i >= 0; i--) {
+            const dateStr = rows[i][0].split('(')[0];
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                lastDateObj = new Date(dateStr);
+                foundDate = true;
+                break;
+            }
         }
+
+        // If we didn't find a date in the table but have startDate prop, might want to use that?
+        // But referencing the *last visible row* is usually what the user expects effectively.
+
+        for (let i = 0; i < count; i++) {
+            lastDateObj.setDate(lastDateObj.getDate() + 1);
+
+            // Format: YYYY-MM-DD(Day)
+            const nextDateStr = formatDate(lastDateObj);
+
+            const newRow = new Array(columns.length).fill('');
+            newRow[0] = nextDateStr; // Pre-fill Date Column
+
+            newRows.push(newRow);
+        }
+
         const updatedRows = [...rows, ...newRows];
         setRows(updatedRows);
         saveTableConfig(columns, updatedRows);
