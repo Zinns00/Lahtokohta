@@ -3,8 +3,9 @@ export type UserTitle =
     | '개척자'
     | '항해사'
     | '정복자'
+    | '마스터'
     | '초월자'
-    | '마스터';
+    | '절대자';
 
 export interface LevelInfo {
     level: number;
@@ -52,18 +53,21 @@ export function getUserLevelInfo(totalXP: number): LevelInfo {
     } else if (level >= 20 && level <= 39) {
         title = '개척자';
         badge = '🚩';
-    } else if (level >= 40 && level <= 69) {
+    } else if (level >= 40 && level <= 59) {
         title = '항해사';
         badge = '🧭';
-    } else if (level >= 70 && level <= 79) {
+    } else if (level >= 60 && level <= 79) {
         title = '정복자';
         badge = '👑';
-    } else if (level >= 80 && level <= 99) {
+    } else if (level >= 80 && level <= 89) {
+        title = '마스터';
+        badge = '🪐';
+    } else if (level >= 90 && level <= 99) {
         title = '초월자';
         badge = '💠';
     } else if (level >= 100) {
-        title = '마스터';
-        badge = '🪐';
+        title = '절대자';
+        badge = '🌌'; // Absolute badge? Using galaxy/milky way for now based on 'Cosmic' description. User didn't specify.
     }
 
     const progress = requiredXP === 0 ? 100 : Math.min(100, Math.floor((totalXP / requiredXP) * 100));

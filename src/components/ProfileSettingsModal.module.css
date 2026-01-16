@@ -184,10 +184,28 @@
     position: relative;
 }
 
+.previewFrame::after {
+    content: '';
+    position: absolute;
+    top: -15%;
+    left: -15%;
+    width: 130%;
+    height: 130%;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 2;
+    pointer-events: none;
+}
+
 .previewImage {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: 50%;
+    /* Ensure image is round */
+    position: relative;
+    z-index: 1;
+    /* Avatar goes under the frame */
 }
 
 /* Change Photo Button overlay */
@@ -371,36 +389,86 @@
 }
 
 /* CSS specific Frames */
+/* CSS specific Frames */
 .frameExplorer {
-    border: 3px solid #71717a;
+    border: none;
 }
 
-/* Zinc 500 */
+.frameExplorer::after {
+    background-image: url('/assets/frames/explorer.png');
+    background-size: 100% 100%;
+    mix-blend-mode: screen;
+    /* Black background asset */
+}
+
 .framePioneer {
-    border: 3px solid #f97316;
+    border: none;
 }
 
-/* Orange 500 */
+.framePioneer::after {
+    background-image: url('/assets/frames/pioneer.png');
+    background-size: 100% 100%;
+    mix-blend-mode: screen;
+    /* Black background asset */
+}
+
 .frameNavigator {
-    border: 3px solid #38bdf8;
+    border: none;
 }
 
-/* Sky 400 */
+.frameNavigator::after {
+    background-image: url('/assets/frames/navigator.png');
+    background-size: 100% 100%;
+    mix-blend-mode: screen;
+    /* Black background asset */
+}
+
 .frameConqueror {
-    border: 3px solid #eab308;
+    border: none;
 }
 
-/* Yellow 500 */
-.frameTranscendent {
-    border: 3px solid #a855f7;
-    box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+.frameConqueror::after {
+    background-image: url('/assets/frames/conqueror.png');
+    background-size: 100% 100%;
+    mix-blend-mode: screen;
+    /* Black background asset */
 }
 
 .frameMaster {
-    border: 3px solid #ec4899;
-    box-shadow: 0 0 15px rgba(236, 72, 153, 0.5), inset 0 0 10px rgba(236, 72, 153, 0.2);
-    background: linear-gradient(#000, #000) padding-box, linear-gradient(45deg, #ec4899, #8b5cf6) border-box;
-    border: 3px solid transparent;
+    border: none;
+    box-shadow: none;
+    background: none;
+}
+
+.frameMaster::after {
+    background-image: url('/assets/frames/master.png');
+    background-size: 100% 100%;
+    mix-blend-mode: screen;
+    /* Black background asset */
+}
+
+.frameTranscendent {
+    border: none;
+    box-shadow: none;
+}
+
+.frameTranscendent::after {
+    background-image: url('/assets/frames/transcendent.png');
+    background-size: 100% 100%;
+    mix-blend-mode: normal;
+    /* Transparent PNG (User Upload) */
+}
+
+.frameAbsolute {
+    border: none;
+    box-shadow: none;
+}
+
+.frameAbsolute::after {
+    background-image: url('/assets/frames/absolute.png');
+    background-size: 100% 100%;
+    mix-blend-mode: normal;
+    /* Transparent PNG (User Upload) */
 }
 
 /* Action Button - Replaces Footer */

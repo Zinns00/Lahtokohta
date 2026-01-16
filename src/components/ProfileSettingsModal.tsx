@@ -25,9 +25,10 @@ const FRAMES = [
     { id: 'Explorer', label: '탐험가', minLevel: 1, cssClass: styles.frameExplorer },
     { id: 'Pioneer', label: '개척자', minLevel: 20, cssClass: styles.framePioneer },
     { id: 'Navigator', label: '항해사', minLevel: 40, cssClass: styles.frameNavigator },
-    { id: 'Conqueror', label: '정복자', minLevel: 70, cssClass: styles.frameConqueror },
-    { id: 'Transcendent', label: '초월자', minLevel: 80, cssClass: styles.frameTranscendent },
-    { id: 'Master', label: '마스터', minLevel: 100, cssClass: styles.frameMaster },
+    { id: 'Conqueror', label: '정복자', minLevel: 60, cssClass: styles.frameConqueror },
+    { id: 'Master', label: '마스터', minLevel: 80, cssClass: styles.frameMaster },
+    { id: 'Transcendent', label: '초월자', minLevel: 90, cssClass: styles.frameTranscendent },
+    { id: 'Absolute', label: '절대자', minLevel: 100, cssClass: styles.frameAbsolute },
 ];
 
 export default function ProfileSettingsModal({ isOpen, onClose, user, onSuccess }: Props) {
