@@ -73,6 +73,40 @@
     justify-content: center;
     font-weight: 600;
     font-size: 0.9rem;
+    overflow: hidden;
+}
+
+/* Frames for Avatar */
+.frameExplorer {
+    border: 2px solid #71717a;
+}
+
+/* Zinc 500 */
+.framePioneer {
+    border: 2px solid #f97316;
+}
+
+/* Orange 500 */
+.frameNavigator {
+    border: 2px solid #38bdf8;
+}
+
+/* Sky 400 */
+.frameConqueror {
+    border: 2px solid #eab308;
+}
+
+/* Yellow 500 */
+.frameTranscendent {
+    border: 2px solid #a855f7;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+.frameMaster {
+    border: 2px solid #ec4899;
+    box-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
+    border-color: #ec4899;
+    /* Fallback */
 }
 
 .userInfo {

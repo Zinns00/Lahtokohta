@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String      @id @default(uuid())
+  username  String      @unique
+  email     String      @unique
+  password  String
+  image     String?
+  bio       String?     // Short bio or status message
+  
+  // Account Level System
+  title     String?     // Equipped Title (e.g. 'Explorer')
+  equippedFrame String? // Equipped Border ID
+  totalXP   Int         @default(0)
+  
+  workspaces Workspace[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Workspace {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  category    String   // e.g. 'Health', 'Study'
+  color       String   @default("bronze")
+  
+  // Difficulty & Scaling
+  difficulty  String   // 'Easy', 'Normal', 'Hard'
+  
+  // Local Level System (Tier)
+  level       Int      @default(1)
+  currentXP   Int      @default(0)
+  
+  // Time & Goals
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+  minStudyHours Int    @default(0)
+  
+  // Gamification (Local)
+  streak      Int      @default(0)
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  tasks       Task[]
+  attendances Attendance[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Task {
+  id          Int      @id @default(autoincrement())
+  content     String
+  isDone      Boolean  @default(false)
+  xpReward    Int      @default(10)
+  
+  // New Features for MVP
+  type        String   @default("PERSONAL") // 'TEAM' | 'PERSONAL'
+  priority    String   @default("MEDIUM")   // 'HIGH' | 'MEDIUM' | 'LOW'
+  
+  workspaceId Int
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+}
+
+model Attendance {
+  id          Int      @id @default(autoincrement())
+  startTime   DateTime
+  endTime     DateTime?
+  durationMin Int?     // Calculated duration in minutes
+  note        String?
+  
+  workspaceId Int
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+}

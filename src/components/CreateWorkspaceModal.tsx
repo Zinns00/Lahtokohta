@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { ko } from 'date-fns/locale';
-import { FiX, FiCheck, FiChevronRight, FiChevronLeft, FiTarget, FiCalendar, FiClock, FiActivity } from 'react-icons/fi';
+import { FiX, FiCheck, FiChevronRight, FiTarget, FiCalendar, FiClock } from 'react-icons/fi';
 import styles from './CreateWorkspaceModal.module.css';
 
 interface CreateWorkspaceModalProps {
@@ -40,7 +40,29 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
         end: ''
     });
 
+    const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+    const categoryRef = useRef<HTMLDivElement>(null);
+
     const [viewDate, setViewDate] = useState(new Date());
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (categoryRef.current && !categoryRef.current.contains(event.target as Node)) {
+                setIsCategoryOpen(false);
+            }
+        }
+
+        if (isCategoryOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        } else {
+            document.removeEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isCategoryOpen]);
 
     useEffect(() => {
         if (formData.startDate) {
@@ -52,6 +74,7 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
     useEffect(() => {
         if (isOpen) {
             setStep(1);
+            setIsCategoryOpen(false); // Reset dropdown
             const now = new Date();
             setFormData({
                 title: '',
@@ -270,15 +293,56 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
 
                                 <label>
                                     카테고리
-                                    <select
-                                        value={formData.category}
-                                        onChange={e => setFormData({ ...formData, category: e.target.value })}
-                                    >
-                                        <option value="Study">공부 (Study)</option>
-                                        <option value="Project">프로젝트 (Project)</option>
-                                        <option value="Health">운동 (Health)</option>
-                                        <option value="Hobby">취미 (Hobby)</option>
-                                    </select>
+                                    <div className={styles.customSelectWrapper} ref={categoryRef}>
+                                        <div
+                                            className={`${styles.selectTrigger} ${isCategoryOpen ? styles.selectOpen : ''}`}
+                                            onMouseDown={(e) => {
+                                                e.stopPropagation();
+                                                // Prevent default behavior if necessary but allow focus
+                                            }}
+                                            onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                                        >
+                                            <span className={styles.selectedValue}>
+                                                {formData.category === 'Study' && '📚 Academic (학습)'}
+                                                {formData.category === 'Project' && '🚀 Project (프로젝트)'}
+                                                {formData.category === 'Health' && '🌿 Wellness (건강)'}
+                                                {formData.category === 'Hobby' && '🎨 Hobby (취미)'}
+                                            </span>
+                                            <FiChevronRight className={`${styles.selectArrow} ${isCategoryOpen ? styles.rotateArrow : ''}`} />
+                                        </div>
+
+                                        <AnimatePresence>
+                                            {isCategoryOpen && (
+                                                <motion.div
+                                                    className={styles.selectDropdown}
+                                                    initial={{ opacity: 0, y: -10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -10 }}
+                                                    transition={{ duration: 0.2 }}
+                                                >
+                                                    {[
+                                                        { val: 'Study', label: '📚 Academic (학습)' },
+                                                        { val: 'Project', label: '🚀 Project (프로젝트)' },
+                                                        { val: 'Health', label: '🌿 Wellness (건강)' },
+                                                        { val: 'Hobby', label: '🎨 Hobby (취미)' }
+                                                    ].map((opt) => (
+                                                        <div
+                                                            key={opt.val}
+                                                            className={`${styles.selectOption} ${formData.category === opt.val ? styles.selectedOption : ''}`}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setFormData(prev => ({ ...prev, category: opt.val }));
+                                                                setIsCategoryOpen(false);
+                                                            }}
+                                                        >
+                                                            {opt.label}
+                                                            {formData.category === opt.val && <FiCheck className={styles.checkIcon} />}
+                                                        </div>
+                                                    ))}
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
                                 </label>
 
                                 <label>

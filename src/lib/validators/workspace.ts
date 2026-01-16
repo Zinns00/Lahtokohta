@@ -8,4 +8,5 @@ export const createWorkspaceSchema = z.object({
     endDate: z.string().optional(), // ISO date string
     description: z.string().optional(), // Goal
     minStudyHours: z.number().min(0).default(0),
+    difficulty: z.string().default('Normal'),
 });

@@ -6,6 +6,8 @@ import { FiPlus, FiActivity, FiBook, FiCode, FiZap, FiGrid, FiBriefcase, FiHeart
 import { motion, Variants } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import CreateWorkspaceModal from '@/components/CreateWorkspaceModal';
+import ProfileSettingsModal from '@/components/ProfileSettingsModal';
+import { getUserLevelInfo } from '@/lib/levelSystem';
 
 const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -34,16 +36,22 @@ interface User {
     id: string;
     username: string;
     email: string;
+    image?: string;
+    bio?: string;
+    totalXP: number;
+    title?: string;
+    equippedFrame?: string;
 }
 
 interface Workspace {
     id: number;
     title: string;
-    category: string;
     description: string;
-    color: string; // 'bronze' | 'silver' | 'gold' | ...
-    progress: number;
+    category: string;
+    difficulty: string; // 'Easy' | 'Normal' | 'Hard'
     level: number;
+    progress: number;
+    color: string;
     created_at: string;
 }
 
@@ -52,6 +60,7 @@ export default function DashboardPage() {
     const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
     const router = useRouter();
 
     const fetchWorkspaces = useCallback(async () => {
@@ -63,6 +72,7 @@ export default function DashboardPage() {
                     ...ws,
                     progress: ws.progress || 0,
                     level: ws.level || 1,
+                    color: ws.color || 'bronze'
                 }));
                 setWorkspaces(mapped);
             }
@@ -71,31 +81,33 @@ export default function DashboardPage() {
         }
     }, []);
 
-    useEffect(() => {
-        const fetchUserAndWorkspaces = async () => {
-            try {
-                const res = await fetch('/api/me');
-                if (!res.ok) {
-                    throw new Error('Not authenticated');
-                }
+    const fetchUser = useCallback(async () => {
+        try {
+            const res = await fetch('/api/user/me');
+            if (res.ok) {
                 const data = await res.json();
-                setUser(data.user);
-                await fetchWorkspaces();
-            } catch (error) {
-                console.error('Failed to fetch user:', error);
-                router.push('/');
-            } finally {
-                setIsLoading(false);
+                setUser(data);
+            } else {
+                throw new Error('Not authenticated');
             }
-        };
+        } catch (error) {
+            console.error('Failed to fetch user:', error);
+            router.push('/');
+        }
+    }, [router]);
 
-        fetchUserAndWorkspaces();
-    }, [router, fetchWorkspaces]);
+    useEffect(() => {
+        const init = async () => {
+            await Promise.all([fetchUser(), fetchWorkspaces()]);
+            setIsLoading(false);
+        };
+        init();
+    }, [fetchUser, fetchWorkspaces]);
 
     const getIconByCategory = (cat: string) => {
         switch (cat) {
             case 'Health': return <FiActivity />;
-            case 'Study': return <FiCode />;
+            case 'Study': return <FiBook />;
             case 'Project': return <FiBriefcase />;
             case 'Hobby': return <FiHeart />;
             default: return <FiBook />;
@@ -110,6 +122,10 @@ export default function DashboardPage() {
         return <div className={styles.container} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>Loading...</div>;
     }
 
+    const levelInfo = user ? getUserLevelInfo(user.totalXP) : { level: 1, title: '탐험가', badge: '🔭' };
+    // Use equipped title if available, otherwise calculated title
+    const displayTitle = user?.title || levelInfo.title;
+
     return (
         <div className={styles.container}>
             <CreateWorkspaceModal
@@ -119,6 +135,17 @@ export default function DashboardPage() {
                     fetchWorkspaces();
                 }}
             />
+
+            {user && (
+                <ProfileSettingsModal
+                    isOpen={isProfileSettingsOpen}
+                    onClose={() => setIsProfileSettingsOpen(false)}
+                    user={user}
+                    onSuccess={() => {
+                        fetchUser(); // Refresh user data
+                    }}
+                />
+            )}
 
             {/* Navbar */}
             <motion.nav
@@ -132,13 +159,21 @@ export default function DashboardPage() {
                     Lähtökohta
                 </div>
 
-                <div className={styles.profileSection}>
+                <div className={styles.profileSection} onClick={() => setIsProfileSettingsOpen(true)} style={{ cursor: 'pointer' }}>
                     <div className={styles.userProfile}>
                         <div className={styles.userInfo}>
                             <span className={styles.userName}>{user?.username || '게스트'}</span>
-                            <span className={styles.userTitle}>Lv.3 탐험가</span>
+                            <span className={styles.userTitle}>
+                                {`Lv.${levelInfo.level} ${displayTitle} ${levelInfo.badge}`}
+                            </span>
                         </div>
-                        <div className={styles.avatar}>{user?.username ? getInitials(user.username) : 'G'}</div>
+                        <div className={`${styles.avatar} ${styles[`frame${user?.equippedFrame || 'Explorer'}`]}`}>
+                            {user?.image ? (
+                                <img src={user.image} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                user?.username ? getInitials(user.username) : 'G'
+                            )}
+                        </div>
                     </div>
                 </div>
             </motion.nav>
@@ -218,6 +253,7 @@ export default function DashboardPage() {
                                     translateY: -5,
                                 }}
                                 whileTap={{ scale: 0.98 }}
+                                onClick={() => router.push(`/workspaces/${workspace.id}`)}
                             >
                                 <div className={styles.cardContentCore} />
 

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, signupSchema, LoginInput, SignupInput } from '@/lib/validators/auth';
-import { FaEye, FaEyeSlash, FaTimes } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaTimes, FaCheckCircle } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 import styles from './AuthModal.module.css'; // Import generic CSS
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +18,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     const [isLoginMode, setIsLoginMode] = useState(true);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false); // New Success State
     const router = useRouter();
 
     return (
@@ -45,12 +46,21 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
                         {/* Header */}
                         <div className={styles.header}>
-                            <h2 className={styles.title}>
-                                {isLoginMode ? 'Welcome Back' : 'Create Account'}
-                            </h2>
-                            <p className={styles.subtitle}>
-                                {isLoginMode ? '성장을 위한 여정을 계속하세요.' : '새로운 성장의 시작을 함께해요.'}
-                            </p>
+                            {isSuccess ? (
+                                <>
+                                    <h2 className={styles.title} style={{ color: '#10b981' }}>Success!</h2>
+                                    <p className={styles.subtitle}>회원가입이 완료되었습니다.</p>
+                                </>
+                            ) : (
+                                <>
+                                    <h2 className={styles.title}>
+                                        {isLoginMode ? 'Welcome Back' : 'Create Account'}
+                                    </h2>
+                                    <p className={styles.subtitle}>
+                                        {isLoginMode ? '성장을 위한 여정을 계속하세요.' : '새로운 성장의 시작을 함께해요.'}
+                                    </p>
+                                </>
+                            )}
                         </div>
 
                         {/* Error Message */}
@@ -60,9 +70,34 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             </div>
                         )}
 
-                        {/* Forms */}
+                        {/* Forms & Success View */}
                         <AnimatePresence mode="wait">
-                            {isLoginMode ? (
+                            {isSuccess ? (
+                                <motion.div
+                                    key="success"
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.8 }}
+                                    transition={{ type: "spring", duration: 0.5 }}
+                                    className={styles.successView}
+                                >
+                                    <motion.div
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{ type: "spring", delay: 0.2, stiffness: 200 }}
+                                    >
+                                        <FaCheckCircle size={80} color="#10b981" />
+                                    </motion.div>
+                                    <motion.p
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.4 }}
+                                        className={styles.successText}
+                                    >
+                                        잠시 후 로그인 화면으로 이동합니다...
+                                    </motion.p>
+                                </motion.div>
+                            ) : isLoginMode ? (
                                 <motion.div
                                     key="login"
                                     initial={{ opacity: 0, x: -20 }}
@@ -93,8 +128,15 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                                         setIsLoading={setIsLoading}
                                         isLoading={isLoading}
                                         onSuccess={() => {
-                                            alert('회원가입이 완료되었습니다! 로그인해주세요.');
-                                            setIsLoginMode(true);
+                                            // Show Success View instead of Alert
+                                            setIsSuccess(true);
+                                            setErrorMsg(null);
+
+                                            // Auto switch to login after 2 seconds
+                                            setTimeout(() => {
+                                                setIsSuccess(false);
+                                                setIsLoginMode(true);
+                                            }, 2200);
                                         }}
                                     />
                                 </motion.div>
@@ -143,7 +185,16 @@ function LoginForm({ onError, isLoading, setIsLoading, onSuccess }: any) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
             });
-            const result = await res.json();
+
+            // Defensive: Check content type or try/catch parsing
+            let result;
+            try {
+                result = await res.json();
+            } catch (jsonError) {
+                // If JSON parse fails (e.g. 500 HTML page), throw generic error
+                console.error("Failed to parse response:", jsonError);
+                throw new Error(`Server Error (${res.status}): Please check console or try again.`);
+            }
 
             if (!res.ok) throw new Error(result.message || '로그인 실패');
             onSuccess();
@@ -218,10 +269,18 @@ function SignupForm({ onError, isLoading, setIsLoading, onSuccess }: any) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
             });
-            const result = await res.json();
+
+            // Defensive: Safely handle non-JSON responses
+            let result;
+            try {
+                result = await res.json();
+            } catch (jsonError) {
+                console.error("Failed to parse response:", jsonError);
+                throw new Error(`Server Error (${res.status}): Please try again later.`);
+            }
 
             if (!res.ok) throw new Error(result.message || '회원가입 실패');
-            onSuccess();
+            onSuccess(); // Trigger Success View in parent
         } catch (err: any) {
             onError(err.message);
         } finally {
