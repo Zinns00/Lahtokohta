@@ -236,7 +236,8 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
                 onSuccess();
                 onClose();
             } else {
-                alert('Failed to create workspace');
+                const errData = await res.json();
+                alert(`Failed to create workspace: ${errData.message || 'Unknown error'} ${JSON.stringify(errData.errors || '')}`);
             }
         } catch (e) {
             console.error(e);
@@ -430,8 +431,8 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
                                         selected={formData.startDate}
                                         onChange={handleDateChange as any}
                                         startDate={formData.startDate}
-                                        endDate={isEndDateEnabled ? formData.endDate : null}
-                                        selectsRange={isEndDateEnabled as any}
+                                        endDate={formData.endDate}
+                                        selectsRange={true}
                                         inline
                                         locale={ko}
                                         dateFormat="yyyy.MM.dd"

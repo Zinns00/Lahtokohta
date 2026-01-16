@@ -5,6 +5,7 @@ import styles from './ProfileSettingsModal.module.css';
 import { FiX, FiCamera, FiLock, FiCheck, FiEdit2, FiUser } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getUserLevelInfo, UserTitle } from '@/lib/levelSystem';
+import UserAvatar from './UserAvatar';
 
 interface UserData {
     username: string;
@@ -22,18 +23,19 @@ interface Props {
 }
 
 const FRAMES = [
-    { id: 'Explorer', label: '탐험가', minLevel: 1, cssClass: styles.frameExplorer },
-    { id: 'Pioneer', label: '개척자', minLevel: 20, cssClass: styles.framePioneer },
-    { id: 'Navigator', label: '항해사', minLevel: 40, cssClass: styles.frameNavigator },
-    { id: 'Conqueror', label: '정복자', minLevel: 60, cssClass: styles.frameConqueror },
-    { id: 'Master', label: '마스터', minLevel: 80, cssClass: styles.frameMaster },
-    { id: 'Transcendent', label: '초월자', minLevel: 90, cssClass: styles.frameTranscendent },
-    { id: 'Absolute', label: '절대자', minLevel: 100, cssClass: styles.frameAbsolute },
+    { id: 'Default', label: '기본', minLevel: 0 },
+    { id: 'Explorer', label: '탐험가', minLevel: 1 },
+    { id: 'Pioneer', label: '개척자', minLevel: 20 },
+    { id: 'Navigator', label: '항해사', minLevel: 40 },
+    { id: 'Conqueror', label: '정복자', minLevel: 60 },
+    { id: 'Master', label: '마스터', minLevel: 80 },
+    { id: 'Transcendent', label: '초월자', minLevel: 90 },
+    { id: 'Absolute', label: '절대자', minLevel: 100 },
 ];
 
 export default function ProfileSettingsModal({ isOpen, onClose, user, onSuccess }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [activeTab, setActiveTab] = useState<'PROFILE' | 'THEME'>('PROFILE');
+    const [activeTab, setActiveTab] = useState<'PROFILE' | 'THEME' | 'ACCOUNT'>('PROFILE');
     const [isSaving, setIsSaving] = useState(false);
 
     // Form State
@@ -123,10 +125,8 @@ export default function ProfileSettingsModal({ isOpen, onClose, user, onSuccess 
         }
     };
 
-    // Helper to get frame CSS class
-    const getFrameClass = (frameId: string) => {
-        return FRAMES.find(f => f.id === frameId)?.cssClass || '';
-    };
+    // Helper to get frame CSS class - No longer needed, UserAvatar handles it
+    // const getFrameClass = (frameId: string) => { ... };
 
     return (
         <div className={styles.overlay} onClick={onClose}>
@@ -156,6 +156,12 @@ export default function ProfileSettingsModal({ isOpen, onClose, user, onSuccess 
                     >
                         테두리 꾸미기
                     </button>
+                    <button
+                        className={`${styles.tab} ${activeTab === 'ACCOUNT' ? styles.activeTab : ''} `}
+                        onClick={() => setActiveTab('ACCOUNT')}
+                    >
+                        계정
+                    </button>
                 </div>
 
                 {/* Content */}
@@ -171,12 +177,15 @@ export default function ProfileSettingsModal({ isOpen, onClose, user, onSuccess 
                             {/* Avatar */}
                             <div className={styles.avatarSection}>
                                 <div className={styles.avatarPreviewWrapper}>
-                                    <div className={`${styles.previewFrame} ${getFrameClass(selectedFrame)} `}>
-                                        {previewImage ? (
-                                            <img src={previewImage} alt="Avatar" className={styles.previewImage} />
-                                        ) : (
-                                            <span style={{ fontSize: '2rem' }}>🙂</span>
-                                        )}
+                                    <div className={styles.previewFrame}>
+                                        <UserAvatar
+                                            src={previewImage}
+                                            alt={nickname}
+                                            frameId={selectedFrame}
+                                            size="xl" /* 120px equivalent */
+                                            width={120}
+                                            height={120}
+                                        />
                                         <label className={styles.uploadOverlay}>
                                             <FiCamera size={24} color="#fff" />
                                             <input
@@ -224,7 +233,7 @@ export default function ProfileSettingsModal({ isOpen, onClose, user, onSuccess 
                             </p>
                             <div className={styles.frameGrid}>
                                 {FRAMES.map((frame) => {
-                                    const isUnlocked = currentLevel >= frame.minLevel;
+                                    const isUnlocked = currentLevel >= frame.minLevel || user.username === 'test';
                                     const isSelected = selectedFrame === frame.id;
 
                                     return (
@@ -239,8 +248,15 @@ export default function ProfileSettingsModal({ isOpen, onClose, user, onSuccess 
                                                 if (isUnlocked) setSelectedFrame(frame.id);
                                             }}
                                         >
-                                            <div style={{ width: 40, height: 40 }} className={`${styles.previewFrame} ${frame.cssClass} `}>
-                                                {/* Mini preview */}
+                                            <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <UserAvatar
+                                                    src={user.image} /* Use current user image or maybe null for preview? Let's use user image for context */
+                                                    alt={frame.label}
+                                                    frameId={frame.id}
+                                                    size="sm"
+                                                    width={40}
+                                                    height={40}
+                                                />
                                             </div>
                                             <span className={styles.frameName}>{frame.label}</span>
                                             {!isUnlocked && <FiLock className={styles.lockIcon} size={12} />}
@@ -257,6 +273,33 @@ export default function ProfileSettingsModal({ isOpen, onClose, user, onSuccess 
                             >
                                 저장하기
                             </button>
+                        </div>
+                    )}
+
+                    {activeTab === 'ACCOUNT' && (
+                        <div className={styles.accountForm}>
+                            <p className={styles.themeDesc}>
+                                계정 관련 설정을 관리합니다.
+                            </p>
+
+                            <div style={{ marginTop: '2rem', width: '100%' }}>
+                                <button
+                                    className={styles.logoutBtn}
+                                    onClick={async () => {
+                                        if (confirm('정말 로그아웃 하시겠습니까?')) {
+                                            try {
+                                                await fetch('/api/logout', { method: 'POST' });
+                                                window.location.href = '/'; // Redirect to home/login
+                                            } catch (error) {
+                                                console.error('Logout failed', error);
+                                                window.location.href = '/'; // Failsafe
+                                            }
+                                        }
+                                    }}
+                                >
+                                    로그아웃
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
