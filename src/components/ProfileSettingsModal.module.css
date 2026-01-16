@@ -173,40 +173,19 @@
 
 /* This is the dynamic frame */
 .previewFrame {
+    /* Just a container now */
     width: 100%;
     height: 100%;
-    border-radius: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
-    background: #27272a;
     position: relative;
+    /* Removed background and border-radius as UserAvatar has its own */
 }
 
-.previewFrame::after {
-    content: '';
-    position: absolute;
-    top: -15%;
-    left: -15%;
-    width: 130%;
-    height: 130%;
-    background-repeat: no-repeat;
-    background-position: center;
-    z-index: 2;
-    pointer-events: none;
-}
+/* .previewFrame::after removed - Handled by UserAvatar */
 
-.previewImage {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-    /* Ensure image is round */
-    position: relative;
-    z-index: 1;
-    /* Avatar goes under the frame */
-}
+/* .previewImage removed - Handled by UserAvatar */
 
 /* Change Photo Button overlay */
 .uploadOverlay {
@@ -222,7 +201,9 @@
     opacity: 0;
     transition: opacity 0.2s;
     cursor: pointer;
-    border-radius: 24px;
+    border-radius: 50%;
+    z-index: 20;
+    /* Ensure it's above the frame (z-index: 10) */
 }
 
 .previewFrame:hover .uploadOverlay {
@@ -388,88 +369,7 @@
     color: #3f3f46;
 }
 
-/* CSS specific Frames */
-/* CSS specific Frames */
-.frameExplorer {
-    border: none;
-}
-
-.frameExplorer::after {
-    background-image: url('/assets/frames/explorer.png');
-    background-size: 100% 100%;
-    mix-blend-mode: screen;
-    /* Black background asset */
-}
-
-.framePioneer {
-    border: none;
-}
-
-.framePioneer::after {
-    background-image: url('/assets/frames/pioneer.png');
-    background-size: 100% 100%;
-    mix-blend-mode: screen;
-    /* Black background asset */
-}
-
-.frameNavigator {
-    border: none;
-}
-
-.frameNavigator::after {
-    background-image: url('/assets/frames/navigator.png');
-    background-size: 100% 100%;
-    mix-blend-mode: screen;
-    /* Black background asset */
-}
-
-.frameConqueror {
-    border: none;
-}
-
-.frameConqueror::after {
-    background-image: url('/assets/frames/conqueror.png');
-    background-size: 100% 100%;
-    mix-blend-mode: screen;
-    /* Black background asset */
-}
-
-.frameMaster {
-    border: none;
-    box-shadow: none;
-    background: none;
-}
-
-.frameMaster::after {
-    background-image: url('/assets/frames/master.png');
-    background-size: 100% 100%;
-    mix-blend-mode: screen;
-    /* Black background asset */
-}
-
-.frameTranscendent {
-    border: none;
-    box-shadow: none;
-}
-
-.frameTranscendent::after {
-    background-image: url('/assets/frames/transcendent.png');
-    background-size: 100% 100%;
-    mix-blend-mode: normal;
-    /* Transparent PNG (User Upload) */
-}
-
-.frameAbsolute {
-    border: none;
-    box-shadow: none;
-}
-
-.frameAbsolute::after {
-    background-image: url('/assets/frames/absolute.png');
-    background-size: 100% 100%;
-    mix-blend-mode: normal;
-    /* Transparent PNG (User Upload) */
-}
+/* CSS specific Frames - Moved to UserAvatar.module.css */
 
 /* Action Button - Replaces Footer */
 .saveBtn {

@@ -1,0 +1,121 @@
+/* Base Container */
+.container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    /* overflow: visible is default, but explicit for clarity */
+    overflow: visible;
+}
+
+/* Image */
+.avatarImage {
+    border-radius: 50%;
+    object-fit: cover;
+    z-index: 1;
+}
+
+/* Sizes */
+.sm {
+    width: 32px;
+    height: 32px;
+}
+
+.md {
+    width: 48px;
+    height: 48px;
+}
+
+.lg {
+    width: 80px;
+    height: 80px;
+}
+
+.xl {
+    width: 120px;
+    height: 120px;
+}
+
+/* Frame Overlay Base */
+.frameOverlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 130%;
+    /* Default scaling for frames */
+    height: 130%;
+    pointer-events: none;
+    z-index: 10;
+    background-position: center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+}
+
+/* --- Frame Variants (Migrated) --- */
+
+/* Default: Just a border, no image overlay needed? 
+   Actually, for consistency, we can use a border on the container or a pseudo-element.
+   Let's keep it simple: generic border class.
+*/
+.frameDefault .avatarImage {
+    box-shadow: 0 0 0 2px #3f3f46;
+    /* Simple ring */
+}
+
+/* Explorer: 130% (Baseline - User confirmed good) */
+.frameExplorer {
+    background-image: url('/assets/frames/explorer.png');
+    /* 130% inherited from base */
+}
+
+/* Pioneer: Wood/Iron style, slightly bulkier */
+.framePioneer {
+    background-image: url('/assets/frames/pioneer.png');
+    width: 160%;
+    height: 160%;
+}
+
+/* Navigator: Helm/Star style, wide points */
+/* Navigator: Helm/Star style, wide points - Moved up slightly */
+.frameNavigator {
+    background-image: url('/assets/frames/navigator.png');
+    width: 173%;
+    height: 173%;
+    top: 44%;
+    /* Shift up */
+}
+
+/* Conqueror: Crown/Gold, taller - Moved up slightly */
+.frameConqueror {
+    background-image: url('/assets/frames/conqueror.png');
+    width: 150%;
+    height: 150%;
+    top: 44%;
+    /* Shift up more */
+}
+
+/* Master: Galactic/Void - Tightened to match profile border */
+.frameMaster {
+    background-image: url('/assets/frames/master.png');
+    width: 220%;
+    /* Reduced from 135% */
+    height: 220%;
+    top: 43%;
+}
+
+/* Transcendent: Divine/Light - Reduced to find sweet spot */
+.frameTranscendent {
+    background-image: url('/assets/frames/transcendent.png');
+    width: 250%;
+    height: 250%;
+    top: 40%;
+}
+
+/* Absolute: The final form, typically massive coverage */
+.frameAbsolute {
+    background-image: url('/assets/frames/absolute.png');
+    width: 170%;
+    height: 170%;
+}

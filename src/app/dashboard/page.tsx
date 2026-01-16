@@ -7,6 +7,7 @@ import { motion, Variants } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import CreateWorkspaceModal from '@/components/CreateWorkspaceModal';
 import ProfileSettingsModal from '@/components/ProfileSettingsModal';
+import UserAvatar from '@/components/UserAvatar';
 import { getUserLevelInfo } from '@/lib/levelSystem';
 
 const containerVariants: Variants = {
@@ -167,13 +168,14 @@ export default function DashboardPage() {
                                 {`Lv.${levelInfo.level} ${displayTitle} ${levelInfo.badge}`}
                             </span>
                         </div>
-                        <div className={`${styles.avatar} ${styles[`frame${user?.equippedFrame || 'Explorer'}`]}`}>
-                            {user?.image ? (
-                                <img src={user.image} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                                user?.username ? getInitials(user.username) : 'G'
-                            )}
-                        </div>
+                        <UserAvatar
+                            src={user?.image}
+                            alt={user?.username || 'User'}
+                            frameId={user?.equippedFrame}
+                            size="md"
+                            width={40}
+                            height={40}
+                        />
                     </div>
                 </div>
             </motion.nav>
