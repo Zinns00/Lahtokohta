@@ -35,7 +35,7 @@ const FRAMES = [
 
 export default function ProfileSettingsModal({ isOpen, onClose, user, onSuccess }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [activeTab, setActiveTab] = useState<'PROFILE' | 'THEME'>('PROFILE');
+    const [activeTab, setActiveTab] = useState<'PROFILE' | 'THEME' | 'ACCOUNT'>('PROFILE');
     const [isSaving, setIsSaving] = useState(false);
 
     // Form State
@@ -156,6 +156,12 @@ export default function ProfileSettingsModal({ isOpen, onClose, user, onSuccess 
                     >
                         테두리 꾸미기
                     </button>
+                    <button
+                        className={`${styles.tab} ${activeTab === 'ACCOUNT' ? styles.activeTab : ''} `}
+                        onClick={() => setActiveTab('ACCOUNT')}
+                    >
+                        계정
+                    </button>
                 </div>
 
                 {/* Content */}
@@ -267,6 +273,33 @@ export default function ProfileSettingsModal({ isOpen, onClose, user, onSuccess 
                             >
                                 저장하기
                             </button>
+                        </div>
+                    )}
+
+                    {activeTab === 'ACCOUNT' && (
+                        <div className={styles.accountForm}>
+                            <p className={styles.themeDesc}>
+                                계정 관련 설정을 관리합니다.
+                            </p>
+
+                            <div style={{ marginTop: '2rem', width: '100%' }}>
+                                <button
+                                    className={styles.logoutBtn}
+                                    onClick={async () => {
+                                        if (confirm('정말 로그아웃 하시겠습니까?')) {
+                                            try {
+                                                await fetch('/api/logout', { method: 'POST' });
+                                                window.location.href = '/'; // Redirect to home/login
+                                            } catch (error) {
+                                                console.error('Logout failed', error);
+                                                window.location.href = '/'; // Failsafe
+                                            }
+                                        }
+                                    }}
+                                >
+                                    로그아웃
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>

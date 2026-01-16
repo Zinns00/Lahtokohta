@@ -423,6 +423,36 @@
     color: #000;
 }
 
+
 .themeSaveBtn:hover {
     background: #e4e4e7;
+}
+
+/* Account Tab Styles */
+.accountForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+}
+
+.logoutBtn {
+    width: 100%;
+    padding: 1rem;
+    background: #ef4444;
+    /* Red 500 */
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: background 0.2s;
+}
+
+.logoutBtn:hover {
+    background: #dc2626;
+    /* Red 600 */
 }
