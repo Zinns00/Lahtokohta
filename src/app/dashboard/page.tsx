@@ -8,7 +8,18 @@ import { useRouter } from 'next/navigation';
 import CreateWorkspaceModal from '@/components/CreateWorkspaceModal';
 import ProfileSettingsModal from '@/components/ProfileSettingsModal';
 import UserAvatar from '@/components/UserAvatar';
-import { getUserLevelInfo, getWorkspaceMaxXP, getWorkspaceTier } from '@/lib/levelSystem';
+import { getUserLevelInfo, getWorkspaceMaxXP, getWorkspaceTier, WorkspaceTier } from '@/lib/levelSystem';
+
+const TIER_STYLES: Record<WorkspaceTier, string> = {
+    'grandidierite': styles.cardGrandidierite,
+    'painite': styles.cardPainite,
+    'red diamond': styles.cardRedDiamond,
+    'diamond': styles.cardDiamond,
+    'platinum': styles.cardPlatinum,
+    'gold': styles.cardGold,
+    'silver': styles.cardSilver,
+    'bronze': styles.cardBronze
+};
 
 const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -54,6 +65,7 @@ interface Workspace {
     progress: number;
     color: string;
     created_at: string;
+    currentXP?: number;
 }
 
 export default function DashboardPage() {
@@ -70,7 +82,6 @@ export default function DashboardPage() {
             if (res.ok) {
                 const data = await res.json();
                 const mapped = data.map((ws: any) => {
-                    const difficulty = ws.difficulty as 'Easy' | 'Normal' | 'Hard';
                     const maxXP = getWorkspaceMaxXP(ws.level || 1);
                     const progress = maxXP === 0 ? 0 : Math.min(100, Math.floor(((ws.currentXP || 0) / maxXP) * 100));
 
@@ -121,16 +132,11 @@ export default function DashboardPage() {
         }
     };
 
-    const getInitials = (name: string) => {
-        return name.slice(0, 2).toUpperCase();
-    };
-
     if (isLoading) {
         return <div className={styles.container} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>Loading...</div>;
     }
 
     const levelInfo = user ? getUserLevelInfo(user.totalXP) : { level: 1, title: '탐험가', badge: '🔭' };
-    // Use equipped title if available, otherwise calculated title
     const displayTitle = user?.title || levelInfo.title;
 
     return (
@@ -238,17 +244,8 @@ export default function DashboardPage() {
 
                     {/* Workspace Cards */}
                     {workspaces.map((workspace) => {
-                        const tier = workspace.color.toLowerCase();
-                        let tierStyle = styles.cardBronze; // Default
-
-                        if (tier.includes('grandidierite')) tierStyle = styles.cardGrandidierite;
-                        else if (tier.includes('painite')) tierStyle = styles.cardPainite;
-                        else if (tier.includes('red diamond')) tierStyle = styles.cardRedDiamond;
-                        else if (tier.includes('diamond')) tierStyle = styles.cardDiamond;
-                        else if (tier.includes('platinum')) tierStyle = styles.cardPlatinum;
-                        else if (tier.includes('gold')) tierStyle = styles.cardGold;
-                        else if (tier.includes('silver')) tierStyle = styles.cardSilver;
-
+                        const tier = workspace.color as WorkspaceTier;
+                        const tierStyle = TIER_STYLES[tier] || styles.cardBronze;
 
                         return (
                             <motion.div

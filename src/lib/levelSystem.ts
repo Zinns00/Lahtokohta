@@ -1,3 +1,7 @@
+// ==========================================
+// Types & Interfaces
+// ==========================================
+
 export type UserTitle =
     | '탐험가'
     | '개척자'
@@ -15,18 +19,80 @@ export interface LevelInfo {
     progress: number; // 0 to 100
 }
 
+export type WorkspaceTier =
+    | 'grandidierite'
+    | 'painite'
+    | 'red diamond'
+    | 'diamond'
+    | 'platinum'
+    | 'gold'
+    | 'silver'
+    | 'bronze';
+
+// ==========================================
+// Configuration Constants
+// ==========================================
+
+const LEVEL_CONFIG = {
+    MAX_LEVEL: 100,
+    BASE_XP: 1000,
+    GROWTH_FACTOR: 1.1,      // Exponential growth rate
+    SOFT_CAP_LEVEL: 80,      // Level where growth switches to linear
+    SOFT_CAP_INCREMENT: 1000 // Linear increment after soft cap
+} as const;
+
+const TITLE_THRESHOLDS: { minLevel: number; title: UserTitle; badge: string }[] = [
+    { minLevel: 100, title: '절대자', badge: '🌌' },
+    { minLevel: 90, title: '초월자', badge: '💠' },
+    { minLevel: 80, title: '마스터', badge: '🪐' },
+    { minLevel: 60, title: '정복자', badge: '👑' },
+    { minLevel: 40, title: '항해사', badge: '🧭' },
+    { minLevel: 20, title: '개척자', badge: '🚩' },
+    { minLevel: 1, title: '탐험가', badge: '🔭' },
+];
+
+export const TIER_THRESHOLDS: { tier: WorkspaceTier; minLevel: number }[] = [
+    { tier: 'grandidierite', minLevel: 120 },
+    { tier: 'painite', minLevel: 100 },
+    { tier: 'red diamond', minLevel: 90 },
+    { tier: 'diamond', minLevel: 80 },
+    { tier: 'platinum', minLevel: 50 },
+    { tier: 'gold', minLevel: 30 },
+    { tier: 'silver', minLevel: 10 },
+    { tier: 'bronze', minLevel: 0 },
+];
+
+// ==========================================
+// Core Logic
+// ==========================================
+
+/**
+ * Calculates the XP required to move from currentLevel to currentLevel + 1.
+ */
+function getXPForNextLevel(level: number): number {
+    if (level < LEVEL_CONFIG.SOFT_CAP_LEVEL) {
+        // Exponential Phase (Extreme Difficulty)
+        // Formula: Base * (Growth ^ (Level - 1))
+        return Math.floor(LEVEL_CONFIG.BASE_XP * Math.pow(LEVEL_CONFIG.GROWTH_FACTOR, level - 1));
+    } else {
+        // Linear Phase (Sustainable Endgame)
+        // Formula: Req(79) + (Level - 79) * Increment
+        // We use the requirements of Lv.79 (the last exponential level) as the baseline anchor.
+        const reqAt79 = Math.floor(LEVEL_CONFIG.BASE_XP * Math.pow(LEVEL_CONFIG.GROWTH_FACTOR, 79 - 1));
+        return reqAt79 + ((level - 79) * LEVEL_CONFIG.SOFT_CAP_INCREMENT);
+    }
+}
+
 /**
  * Calculates current user level, title, and badge based on Total XP.
- * Formula: RequiredXP = 1000 * (1.2)^(Level-1)
  */
 export function getUserLevelInfo(totalXP: number): LevelInfo {
     let level = 1;
-    let requiredXP = 0;
+    let requiredXP = 0; // The XP needed for the *current* level up (totalXP is consumed as we level up)
 
-    // Calculate level iteratively based on the geometric formula
-    while (true) {
-        // XP needed to complete current level
-        const nextLevelReq = Math.floor(1000 * Math.pow(1.2, level - 1));
+    // Iteratively deduce level from Total XP
+    while (level < LEVEL_CONFIG.MAX_LEVEL) {
+        const nextLevelReq = getXPForNextLevel(level);
 
         if (totalXP < nextLevelReq) {
             requiredXP = nextLevelReq;
@@ -35,47 +101,24 @@ export function getUserLevelInfo(totalXP: number): LevelInfo {
 
         totalXP -= nextLevelReq;
         level++;
-
-        if (level >= 100) {
-            level = 100;
-            requiredXP = 0; // Max level
-            totalXP = 0;
-            break;
-        }
     }
 
-    let title: UserTitle = '탐험가';
-    let badge = '🔭'; // Telescope
-
-    if (level >= 1 && level <= 19) {
-        title = '탐험가';
-        badge = '🔭';
-    } else if (level >= 20 && level <= 39) {
-        title = '개척자';
-        badge = '🚩';
-    } else if (level >= 40 && level <= 59) {
-        title = '항해사';
-        badge = '🧭';
-    } else if (level >= 60 && level <= 79) {
-        title = '정복자';
-        badge = '👑';
-    } else if (level >= 80 && level <= 89) {
-        title = '마스터';
-        badge = '🪐';
-    } else if (level >= 90 && level <= 99) {
-        title = '초월자';
-        badge = '💠';
-    } else if (level >= 100) {
-        title = '절대자';
-        badge = '🌌'; // Absolute badge? Using galaxy/milky way for now based on 'Cosmic' description. User didn't specify.
+    // Handle Max Level Case
+    if (level >= LEVEL_CONFIG.MAX_LEVEL) {
+        level = LEVEL_CONFIG.MAX_LEVEL;
+        requiredXP = 0;
+        totalXP = 0;
     }
+
+    // Determine Title & Badge
+    const titleInfo = TITLE_THRESHOLDS.find((t) => level >= t.minLevel) || TITLE_THRESHOLDS[TITLE_THRESHOLDS.length - 1];
 
     const progress = requiredXP === 0 ? 100 : Math.min(100, Math.floor((totalXP / requiredXP) * 100));
 
     return {
         level,
-        title,
-        badge,
+        title: titleInfo.title,
+        badge: titleInfo.badge,
         nextLevelXP: requiredXP,
         progress
     };
@@ -83,12 +126,11 @@ export function getUserLevelInfo(totalXP: number): LevelInfo {
 
 /**
  * Calculates max XP for a specific workspace level.
- * Formula: 100 * Level (Fixed for all difficulties now)
+ * Formula: 100 * Level
  */
 export function getWorkspaceMaxXP(level: number): number {
     return Math.floor(100 * level);
 }
-
 
 export function getDifficultyMultiplier(difficulty: 'Easy' | 'Normal' | 'Hard'): number {
     const multipliers = {
@@ -102,13 +144,11 @@ export function getDifficultyMultiplier(difficulty: 'Easy' | 'Normal' | 'Hard'):
 /**
  * Returns the visual tier name based on workspace level.
  */
-export function getWorkspaceTier(level: number): string {
-    if (level >= 120) return 'grandidierite';
-    if (level >= 100) return 'painite';
-    if (level >= 90) return 'red diamond';
-    if (level >= 80) return 'diamond';
-    if (level >= 50) return 'platinum';
-    if (level >= 30) return 'gold';
-    if (level >= 10) return 'silver';
+export function getWorkspaceTier(level: number): WorkspaceTier {
+    for (const threshold of TIER_THRESHOLDS) {
+        if (level >= threshold.minLevel) {
+            return threshold.tier;
+        }
+    }
     return 'bronze';
 }
