@@ -89,6 +89,7 @@ export function getWorkspaceMaxXP(level: number): number {
     return Math.floor(100 * level);
 }
 
+
 export function getDifficultyMultiplier(difficulty: 'Easy' | 'Normal' | 'Hard'): number {
     const multipliers = {
         'Easy': 1.0,
@@ -96,4 +97,18 @@ export function getDifficultyMultiplier(difficulty: 'Easy' | 'Normal' | 'Hard'):
         'Hard': 2.0
     };
     return multipliers[difficulty] || 1.0;
+}
+
+/**
+ * Returns the visual tier name based on workspace level.
+ */
+export function getWorkspaceTier(level: number): string {
+    if (level >= 120) return 'grandidierite';
+    if (level >= 100) return 'painite';
+    if (level >= 90) return 'red diamond';
+    if (level >= 80) return 'diamond';
+    if (level >= 50) return 'platinum';
+    if (level >= 30) return 'gold';
+    if (level >= 10) return 'silver';
+    return 'bronze';
 }

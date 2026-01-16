@@ -215,137 +215,243 @@
     background: #1a1a20;
 }
 
-/* --- TIER DEFINITIONS (10 Levels) --- */
+/* --- TIER DEFINITIONS (Unified & Expanded) --- */
 
-/* Tier 1: Bronze */
+/* 
+   Shared base for all tiers is .card 
+   Specific tweaks go into each class.
+*/
+
+/* Tier 1: Bronze (Lv. 1-9) */
+/* Concept: Basic, Clean, Solid */
 .cardBronze {
-    --tier-color: #cd7f32;
-    --tier-glow: rgba(205, 127, 50, 0.2);
-    --tier-bg: #2a1f1a;
+    --tier-color: #a87a1E;
+    --tier-glow: rgba(168, 122, 30, 0.2);
+    --tier-bg: #1a1a20;
 }
 
-.cardBronze .cardContentCore {
-    border-color: rgba(205, 127, 50, 0.2);
-}
-
-/* Tier 2: Silver */
+/* Tier 2: Silver (Lv. 10-29) */
+/* Concept: Metallic, Double Border */
 .cardSilver {
-    --tier-color: #a5f3fc;
-    --tier-glow: rgba(165, 243, 252, 0.25);
-    --tier-bg: #1a2226;
+    --tier-color: #E0E0E0;
+    --tier-glow: rgba(224, 224, 224, 0.25);
+    --tier-bg: #1a1a20;
+    border-style: double;
+    border-width: 4px;
+    /* Thicker for double effect */
 }
 
 .cardSilver .cardContentCore {
-    border-color: rgba(165, 243, 252, 0.2);
-}
-
-/* Tier 3: Gold */
-.cardGold {
-    --tier-color: #fbbf24;
-    --tier-glow: rgba(251, 191, 36, 0.3);
-    --tier-bg: #292415;
-}
-
-.cardGold .cardContentCore {
-    border-color: rgba(251, 191, 36, 0.2);
-}
-
-/* Tier 4: Platinum */
-.cardPlatinum {
-    --tier-color: #e2e8f0;
-    /* White-ish Blue */
-    --tier-glow: rgba(226, 232, 240, 0.4);
-    --tier-bg: #1e293b;
-}
-
-.cardPlatinum .cardContentCore {
-    border-color: rgba(226, 232, 240, 0.3);
-}
-
-/* Tier 5: Diamond */
-.cardDiamond {
-    --tier-color: #06b6d4;
-    /* Cyan/Teal Diamond */
-    --tier-glow: rgba(6, 182, 212, 0.5);
-    --tier-bg: #083344;
-}
-
-.cardDiamond .cardContentCore {
-    border-color: rgba(6, 182, 212, 0.4);
-}
-
-/* Tier 6: Lonsdaleite (Hologram Transparent) */
-.cardLonsdaleite {
-    --tier-color: #d8b4fe;
-    /* Light Purple base */
-    --tier-glow: rgba(216, 180, 254, 0.6);
-    --tier-bg: #111;
-}
-
-.cardLonsdaleite .cardContentCore {
-    border-color: rgba(255, 255, 255, 0.5);
     border-style: double;
 }
 
-/* Hologram effect override */
-.cardLonsdaleite:hover {
-    background: linear-gradient(135deg, rgba(255, 0, 0, 0.1), rgba(0, 255, 0, 0.1), rgba(0, 0, 255, 0.1));
-    animation: hologram 3s infinite linear;
+/* Tier 3: Gold (Lv. 30-49) */
+/* Concept: Gilded Luxury, Solid Gold Ingot feel */
+.cardGold {
+    --tier-color: #FFD43B;
+    --tier-glow: rgba(255, 212, 59, 0.4);
+    --tier-bg: #1a1a20;
+
+    /* Elegant Gold Gradient Border */
+    border: 1px solid transparent;
+    background:
+        linear-gradient(#1a1a20, #1a1a20) padding-box,
+        linear-gradient(135deg, #FFD43B 0%, #B7860B 50%, #FFD43B 100%) border-box;
+
+    box-shadow:
+        inset 0 0 15px rgba(255, 215, 0, 0.1),
+        /* Inner sheen */
+        0 0 15px rgba(255, 215, 0, 0.2);
+    /* Outer glow */
 }
 
-/* Tier 7: Tanzanite (Royal Violet) */
-.cardTanzanite {
-    --tier-color: #7c3aed;
-    /* Violet */
-    --tier-glow: rgba(124, 58, 237, 0.6);
-    --tier-bg: #2e1065;
+/* Tier 4: Platinum (Lv. 50-79) */
+/* Concept: Tech, Sleek, Futuristic */
+.cardPlatinum {
+    --tier-color: #00F5FF;
+    --tier-glow: rgba(0, 245, 255, 0.5);
+    --tier-bg: #1a1a20;
+
+    border: 1px solid var(--tier-color);
+    box-shadow:
+        0 0 10px rgba(0, 245, 255, 0.3),
+        inset 0 0 5px rgba(0, 245, 255, 0.2);
 }
 
-.cardTanzanite .cardContentCore {
-    border-color: rgba(124, 58, 237, 0.5);
+.cardPlatinum::before {
+    /* Tech Grid / Scanline overlay */
+    background: repeating-linear-gradient(transparent,
+            transparent 2px,
+            rgba(0, 245, 255, 0.05) 3px,
+            rgba(0, 245, 255, 0.05) 4px);
+    z-index: 0 !important;
+    opacity: 0.5;
 }
 
-/* Tier 8: Painite (Deep Crimson) */
+/* Tier 5: Diamond (Lv. 80-89) */
+/* Concept: Prismatic, Pulsing */
+.cardDiamond {
+    --tier-color: #B197FC;
+    --tier-glow: rgba(177, 151, 252, 0.5);
+    --tier-bg: #1a1a20;
+    animation: pulseGlow 3s infinite alternate;
+}
+
+/* Tier 6: Red Diamond (Lv. 90-99) */
+/* Concept: Destabilized Energy, High-Tech Laser */
+.cardRedDiamond {
+    --tier-color: #FF3333;
+    /* Pure Bright Neon Red */
+    --tier-glow: rgba(255, 51, 51, 0.8);
+    --tier-bg: #0d0000;
+    /* Pitch black */
+
+    border: 1px solid #FF3333;
+    box-shadow:
+        0 0 10px #FF3333,
+        inset 0 0 20px rgba(255, 0, 0, 0.3);
+
+    animation: rapidPulse 0.5s infinite alternate;
+    /* Very fast, nervous energy */
+    overflow: hidden;
+}
+
+.cardRedDiamond::before {
+    /* Laser interference pattern */
+    background: repeating-linear-gradient(90deg,
+            transparent,
+            transparent 10px,
+            rgba(255, 0, 0, 0.1) 10px,
+            rgba(255, 0, 0, 0.1) 11px);
+    z-index: 0;
+}
+
+@keyframes rapidPulse {
+    0% {
+        box-shadow: 0 0 10px #FF3333;
+        opacity: 1;
+    }
+
+    100% {
+        box-shadow: 0 0 25px #FF3333;
+        opacity: 0.95;
+    }
+}
+
+/* Tier 7: Painite (Lv. 100-119) */
+/* Concept: Rare Gem, Deep Crimson with Brilliance */
 .cardPainite {
-    --tier-color: #ef4444;
-    /* Red */
-    --tier-glow: rgba(239, 68, 68, 0.6);
-    --tier-bg: #450a0a;
+    --tier-color: #E60023;
+    /* Vibrant Crimson/Ruby */
+    --tier-glow: rgba(230, 0, 35, 0.6);
+    --tier-bg: #1a0505;
+    /* Deep reddish black, not pitch black */
+
+    /* Gemstone Facet Feel */
+    background: linear-gradient(135deg, #1a0505 0%, #2d0a0a 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+        0 0 0 1px #590d0d,
+        /* Inner rim */
+        0 0 20px rgba(230, 0, 35, 0.2);
+    /* Outer glow */
 }
 
-.cardPainite .cardContentCore {
-    border-color: rgba(239, 68, 68, 0.5);
+.cardPainite::before {
+    /* Add a subtle "shine" overlay */
+    background: linear-gradient(45deg, transparent 45%, rgba(255, 50, 50, 0.1) 50%, transparent 55%);
+    background-size: 200% 200%;
+    animation: gemShine 4s infinite linear;
 }
 
-/* Tier 9: Pallasite (Metallic Lime) */
-.cardPallasite {
-    --tier-color: #84cc16;
-    /* Lime */
-    --tier-glow: rgba(132, 204, 22, 0.6);
-    --tier-bg: #1a2e05;
+@keyframes gemShine {
+    0% {
+        background-position: 200% 200%;
+    }
+
+    100% {
+        background-position: -200% -200%;
+    }
 }
 
-.cardPallasite .cardContentCore {
-    border-color: rgba(132, 204, 22, 0.5);
+.cardPainite .levelValue {
+    text-shadow: 0 0 10px #E60023;
 }
 
-/* Tier 10: Hibonite (Cosmic Azure) */
-.cardHibonite {
-    --tier-color: #3b82f6;
-    /* Azure Blue */
-    --tier-glow: rgba(59, 130, 246, 0.8);
-    --tier-bg: #172554;
+/* Tier 8: Grandidierite (Lv. 120 - MAX) */
+/* Concept: The Absolute, Legendary, Ethereal */
+.cardGrandidierite {
+    --tier-color: #00F0D4;
+    /* Brighter, Neon Seafoam */
+    --tier-glow: rgba(0, 240, 212, 0.6);
+    --tier-bg: #001210;
+
+    /* Flowing Energy Background */
+    background:
+        radial-gradient(circle at 50% 0%, rgba(0, 240, 212, 0.2), transparent 70%),
+        linear-gradient(135deg, #001210 0%, #002b26 100%);
+    background-size: 200% 200%;
+
+    /* White/Teal Hybrid Border */
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow:
+        0 0 20px var(--tier-glow),
+        inset 0 0 20px rgba(0, 240, 212, 0.1);
+
+    animation: grandidieritePulse 4s infinite alternate;
 }
 
-.cardHibonite .cardContentCore {
-    border-color: rgba(59, 130, 246, 0.6);
+/* Subtle pattern overlay override */
+.cardGrandidierite::before {
+    /* Retain brackets but make them shine white/teal */
+    background:
+        linear-gradient(to right, #fff 2px, transparent 2px) 0 0,
+        linear-gradient(to bottom, #fff 2px, transparent 2px) 0 0,
+        linear-gradient(to left, #fff 2px, transparent 2px) 100% 0,
+        linear-gradient(to bottom, #fff 2px, transparent 2px) 100% 0,
+        linear-gradient(to right, #fff 2px, transparent 2px) 0 100%,
+        linear-gradient(to top, #fff 2px, transparent 2px) 0 100%,
+        linear-gradient(to left, #fff 2px, transparent 2px) 100% 100%,
+        linear-gradient(to top, #fff 2px, transparent 2px) 100% 100%;
+    background-size: 16px 16px;
+    background-repeat: no-repeat;
+
+    /* Add a glow filter to the brackets */
+    filter: drop-shadow(0 0 2px var(--tier-color));
 }
 
-/* Hibonite Stars */
-.cardHibonite::after {
-    box-shadow: 0 0 20px #fff;
-    background: #fff;
+.cardGrandidierite .levelValue {
+    color: #fff;
+    text-shadow:
+        0 0 10px var(--tier-color),
+        0 0 20px #fff;
 }
+
+@keyframes pulseGlow {
+    0% {
+        box-shadow: 0 0 10px var(--tier-glow);
+    }
+
+    100% {
+        box-shadow: 0 0 25px var(--tier-glow);
+        border-color: var(--tier-color);
+    }
+}
+
+@keyframes grandidieritePulse {
+    0% {
+        box-shadow: 0 0 15px var(--tier-glow);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    100% {
+        box-shadow: 0 0 30px var(--tier-glow), 0 0 10px #fff;
+        border-color: #fff;
+    }
+}
+
+/* Remove unused old tiers for cleanliness */
+
 
 
 /* Level Badge - Embedded in top corner like a stat indicator */

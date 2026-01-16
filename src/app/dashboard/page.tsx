@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import CreateWorkspaceModal from '@/components/CreateWorkspaceModal';
 import ProfileSettingsModal from '@/components/ProfileSettingsModal';
 import UserAvatar from '@/components/UserAvatar';
-import { getUserLevelInfo, getWorkspaceMaxXP } from '@/lib/levelSystem';
+import { getUserLevelInfo, getWorkspaceMaxXP, getWorkspaceTier } from '@/lib/levelSystem';
 
 const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -71,14 +71,14 @@ export default function DashboardPage() {
                 const data = await res.json();
                 const mapped = data.map((ws: any) => {
                     const difficulty = ws.difficulty as 'Easy' | 'Normal' | 'Hard';
-                    const maxXP = getWorkspaceMaxXP(ws.level || 1, difficulty || 'Normal');
+                    const maxXP = getWorkspaceMaxXP(ws.level || 1);
                     const progress = maxXP === 0 ? 0 : Math.min(100, Math.floor(((ws.currentXP || 0) / maxXP) * 100));
 
                     return {
                         ...ws,
                         progress: progress,
                         level: ws.level || 1,
-                        color: ws.color || 'bronze'
+                        color: getWorkspaceTier(ws.level || 1)
                     };
                 });
                 setWorkspaces(mapped);
@@ -241,15 +241,14 @@ export default function DashboardPage() {
                         const tier = workspace.color.toLowerCase();
                         let tierStyle = styles.cardBronze; // Default
 
-                        if (tier.includes('silver')) tierStyle = styles.cardSilver;
-                        else if (tier.includes('gold')) tierStyle = styles.cardGold;
-                        else if (tier.includes('platinum')) tierStyle = styles.cardPlatinum;
-                        else if (tier.includes('diamond')) tierStyle = styles.cardDiamond;
-                        else if (tier.includes('lonsdaleite')) tierStyle = styles.cardLonsdaleite;
-                        else if (tier.includes('tanzanite')) tierStyle = styles.cardTanzanite;
+                        if (tier.includes('grandidierite')) tierStyle = styles.cardGrandidierite;
                         else if (tier.includes('painite')) tierStyle = styles.cardPainite;
-                        else if (tier.includes('pallasite')) tierStyle = styles.cardPallasite;
-                        else if (tier.includes('hibonite')) tierStyle = styles.cardHibonite;
+                        else if (tier.includes('red diamond')) tierStyle = styles.cardRedDiamond;
+                        else if (tier.includes('diamond')) tierStyle = styles.cardDiamond;
+                        else if (tier.includes('platinum')) tierStyle = styles.cardPlatinum;
+                        else if (tier.includes('gold')) tierStyle = styles.cardGold;
+                        else if (tier.includes('silver')) tierStyle = styles.cardSilver;
+
 
                         return (
                             <motion.div

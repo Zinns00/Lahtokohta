@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { differenceInMinutes, parse, isSameDay, subDays } from 'date-fns';
-import { getUserLevelInfo, getWorkspaceMaxXP, getDifficultyMultiplier } from '@/lib/levelSystem';
+import { getUserLevelInfo, getWorkspaceMaxXP, getDifficultyMultiplier, getWorkspaceTier } from '@/lib/levelSystem';
 
 // ... (existing code)
 
@@ -151,6 +151,13 @@ export async function POST(
         let newWorkspaceXP = workspace.currentXP + xpReward;
 
         while (true) {
+            // Level Cap at 120
+            if (newWorkspaceLevel >= 120) {
+                newWorkspaceLevel = 120;
+                newWorkspaceXP = 0; // Optional: Maxed out XP or keep accumulating? Usually Max level implies full bar or empty. Let's cap checks.
+                break;
+            }
+
             const maxXP = getWorkspaceMaxXP(newWorkspaceLevel);
             if (newWorkspaceXP >= maxXP) {
                 newWorkspaceXP -= maxXP;
@@ -177,15 +184,18 @@ export async function POST(
                 });
             }
 
-            // Update Workspace Streak & Level
+
+            // Update Workspace Streak & Level & Color
             await tx.workspace.update({
                 where: { id: workspaceId },
                 data: {
                     streak: newStreak,
                     level: newWorkspaceLevel,
-                    currentXP: newWorkspaceXP
+                    currentXP: newWorkspaceXP,
+                    color: getWorkspaceTier(newWorkspaceLevel)
                 }
             });
+
 
             // Update User XP
             const user = await tx.user.findUnique({ where: { id: ownerId } });
