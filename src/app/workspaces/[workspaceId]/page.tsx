@@ -216,6 +216,17 @@ export default function WorkspaceDetailPage() {
                                     startDate={workspace.startDate}
                                     endDate={workspace.endDate}
                                     attendances={workspace.attendances || []}
+                                    minStudyHours={workspace.minStudyHours}
+                                    onCheckInComplete={(newTotalXP) => {
+                                        console.log('WorkspacePage received newTotalXP:', newTotalXP);
+                                        setWorkspace((prev: any) => ({
+                                            ...prev,
+                                            user: {
+                                                ...prev.user,
+                                                totalXP: newTotalXP
+                                            }
+                                        }));
+                                    }}
                                 />
                             </motion.div>
                         )}

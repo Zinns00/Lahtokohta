@@ -82,15 +82,18 @@ export function getUserLevelInfo(totalXP: number): LevelInfo {
 }
 
 /**
- * Calculates max XP for a specific workspace level based on difficulty.
- * Formula: 100 * Level * Multiplier
+ * Calculates max XP for a specific workspace level.
+ * Formula: 100 * Level (Fixed for all difficulties now)
  */
-export function getWorkspaceMaxXP(level: number, difficulty: 'Easy' | 'Normal' | 'Hard'): number {
+export function getWorkspaceMaxXP(level: number): number {
+    return Math.floor(100 * level);
+}
+
+export function getDifficultyMultiplier(difficulty: 'Easy' | 'Normal' | 'Hard'): number {
     const multipliers = {
         'Easy': 1.0,
         'Normal': 1.5,
         'Hard': 2.0
     };
-
-    return Math.floor(100 * level * multipliers[difficulty]);
+    return multipliers[difficulty] || 1.0;
 }

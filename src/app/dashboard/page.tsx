@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import CreateWorkspaceModal from '@/components/CreateWorkspaceModal';
 import ProfileSettingsModal from '@/components/ProfileSettingsModal';
 import UserAvatar from '@/components/UserAvatar';
-import { getUserLevelInfo } from '@/lib/levelSystem';
+import { getUserLevelInfo, getWorkspaceMaxXP } from '@/lib/levelSystem';
 
 const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -69,12 +69,18 @@ export default function DashboardPage() {
             const res = await fetch('/api/workspaces');
             if (res.ok) {
                 const data = await res.json();
-                const mapped = data.map((ws: any) => ({
-                    ...ws,
-                    progress: ws.progress || 0,
-                    level: ws.level || 1,
-                    color: ws.color || 'bronze'
-                }));
+                const mapped = data.map((ws: any) => {
+                    const difficulty = ws.difficulty as 'Easy' | 'Normal' | 'Hard';
+                    const maxXP = getWorkspaceMaxXP(ws.level || 1, difficulty || 'Normal');
+                    const progress = maxXP === 0 ? 0 : Math.min(100, Math.floor(((ws.currentXP || 0) / maxXP) * 100));
+
+                    return {
+                        ...ws,
+                        progress: progress,
+                        level: ws.level || 1,
+                        color: ws.color || 'bronze'
+                    };
+                });
                 setWorkspaces(mapped);
             }
         } catch (error) {
