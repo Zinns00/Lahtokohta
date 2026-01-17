@@ -69,10 +69,25 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
     // Save Table Configuration (Columns & Extra Rows)
     const saveTableConfig = (currentCols: string[], currentRows: string[][]) => {
         if (typeof window === 'undefined') return;
+
+        // Find the maximum date currently in the table
+        let maxDate = '';
+        for (let i = currentRows.length - 1; i >= 0; i--) {
+            const row = currentRows[i];
+            // Check if the first column is a date string (YYYY-MM-DD...)
+            if (row[0] && /^\d{4}-\d{2}-\d{2}/.test(row[0])) {
+                const dateStr = row[0].split('(')[0];
+                if (!maxDate || dateStr > maxDate) {
+                    maxDate = dateStr;
+                }
+            }
+        }
+
         const config = {
             columns: currentCols,
-            // Extra rows that are NOT date rows
-            extraRows: currentRows.filter((row, i) => i > 0 && !/^\d{4}-\d{2}-\d{2}/.test(row[0]))
+            // Extra rows that are NOT date rows (true custom rows)
+            extraRows: currentRows.filter((row, i) => i > 0 && !/^\d{4}-\d{2}-\d{2}/.test(row[0])),
+            maxDate: maxDate // Persist the furthest date user has added
         };
         localStorage.setItem(getStorageKey('table_config'), JSON.stringify(config));
     };
@@ -112,6 +127,7 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
             const savedConfig = loadTableConfig();
             let currentCols = INITIAL_COLUMNS;
             let extraRows: string[][] = [];
+            let savedMaxDate: Date | null = null;
 
             if (savedConfig) {
                 if (savedConfig.columns) {
@@ -120,6 +136,9 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
                 }
                 if (savedConfig.extraRows) {
                     extraRows = savedConfig.extraRows;
+                }
+                if (savedConfig.maxDate) {
+                    savedMaxDate = new Date(savedConfig.maxDate);
                 }
             }
 
@@ -150,6 +169,7 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
                     // Determine Date Range
                     let start = new Date();
                     let end = new Date();
+
                     if (startDate) {
                         start = new Date(startDate);
                         end = endDate ? new Date(endDate) : new Date(start);
@@ -161,7 +181,13 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
                     } else {
                         // Default Fallback
                         start = new Date();
+                        // Start 3 days ago by default
                         start.setDate(start.getDate() - 3);
+                    }
+
+                    // If we have a saved maxDate that is further than our calculated end date, use it
+                    if (savedMaxDate && savedMaxDate > end) {
+                        end = new Date(savedMaxDate);
                     }
 
                     const localDrafts = getLocalDrafts();
