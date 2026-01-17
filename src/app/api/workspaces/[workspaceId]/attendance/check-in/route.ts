@@ -15,7 +15,7 @@ export async function POST(
     try {
         const { workspaceId: idStr } = await params;
         const workspaceId = parseInt(idStr);
-        const { startTime, endTime, date, type = 'confirm' } = await request.json();
+        const { startTime, endTime, date, note, type = 'confirm' } = await request.json();
 
         if (!startTime || !endTime || !date) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -24,13 +24,26 @@ export async function POST(
         // 1. Validate Time & Duration
         const today = new Date();
         const checkInDate = new Date(date);
-        const start = parse(startTime, 'HH:mm', checkInDate);
-        const end = parse(endTime, 'HH:mm', checkInDate);
+
+        if (isNaN(checkInDate.getTime())) {
+            return NextResponse.json({ error: '유효하지 않은 날짜 형식입니다.' }, { status: 400 });
+        }
+
+        let start, end;
+        try {
+            start = parse(startTime, 'HH:mm', checkInDate);
+            end = parse(endTime, 'HH:mm', checkInDate);
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                throw new Error('Invalid Time');
+            }
+        } catch (e) {
+            return NextResponse.json({ error: '시간 형식이 올바르지 않습니다 (예: 09:00)' }, { status: 400 });
+        }
 
         let durationMin = differenceInMinutes(end, start);
         if (durationMin < 0) {
             // Handle cross-midnight case if necessary, or just reject
-            return NextResponse.json({ error: 'End time must be after start time' }, { status: 400 });
+            return NextResponse.json({ error: '종료 시간은 시작 시간보다 늦어야 합니다.' }, { status: 400 });
         }
 
         const workspace = await prisma.workspace.findUnique({
@@ -70,17 +83,17 @@ export async function POST(
             let attendance;
             if (existingAttendance) {
                 // If already officially checked in, don't overwrite with draft (client shouldn't send, but safety)
-                if (existingAttendance.note !== 'DRAFT') {
+                if (existingAttendance.note !== 'DRAFT' && existingAttendance.note && !existingAttendance.note.startsWith('DRAFT:')) {
                     return NextResponse.json({ success: true, message: 'Already verified, skipped draft save' });
                 }
                 attendance = await prisma.attendance.update({
                     where: { id: existingAttendance.id },
-                    data: { startTime: start, endTime: end, durationMin, note: 'DRAFT' }
+                    data: { startTime: start, endTime: end, durationMin, note: `DRAFT:${note || ''}` }
                 });
             } else {
                 attendance = await prisma.attendance.create({
                     data: {
-                        startTime: start, endTime: end, durationMin, workspaceId, note: 'DRAFT'
+                        startTime: start, endTime: end, durationMin, workspaceId, note: `DRAFT:${note || ''}`
                     }
                 });
             }
@@ -89,7 +102,7 @@ export async function POST(
 
         // --- DELETE DRAFT MODE ---
         if (type === 'delete') {
-            if (existingAttendance && existingAttendance.note === 'DRAFT') {
+            if (existingAttendance && (existingAttendance.note === 'DRAFT' || (existingAttendance.note && existingAttendance.note.startsWith('DRAFT:')))) {
                 await prisma.attendance.delete({
                     where: { id: existingAttendance.id }
                 });
@@ -101,7 +114,7 @@ export async function POST(
         // --- CONFIRM MODE ---
 
         // 1. Check if already done
-        if (existingAttendance && existingAttendance.note !== 'DRAFT') {
+        if (existingAttendance && existingAttendance.note !== 'DRAFT' && (!existingAttendance.note || !existingAttendance.note.startsWith('DRAFT:'))) {
             return NextResponse.json({ error: 'Already checked in today' }, { status: 409 });
         }
 
@@ -118,7 +131,11 @@ export async function POST(
             where: {
                 workspaceId: workspaceId,
                 startTime: { lt: startOfDay },
-                note: { not: 'DRAFT' } // Only count valid check-ins
+                // Only count valid check-ins (Not DRAFT)
+                AND: [
+                    { note: { not: 'DRAFT' } },
+                    { note: { not: { startsWith: 'DRAFT:' } } }
+                ]
             },
             orderBy: { startTime: 'desc' }
         });
@@ -174,12 +191,12 @@ export async function POST(
             if (existingAttendance) {
                 attendance = await tx.attendance.update({
                     where: { id: existingAttendance.id },
-                    data: { startTime: start, endTime: end, durationMin, note: '' }
+                    data: { startTime: start, endTime: end, durationMin, note: note || '' }
                 });
             } else {
                 attendance = await tx.attendance.create({
                     data: {
-                        startTime: start, endTime: end, durationMin, workspaceId, note: ''
+                        startTime: start, endTime: end, durationMin, workspaceId, note: note || ''
                     }
                 });
             }

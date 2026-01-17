@@ -4,8 +4,7 @@ import { loginSchema } from '@/lib/validators/auth';
 import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
 import { z } from 'zod';
-
-const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-change-this');
+import { JWT_SECRET_KEY } from '@/lib/auth-constants';
 
 export async function POST(req: Request) {
     console.log('[API] Login Request Received');
@@ -44,7 +43,7 @@ export async function POST(req: Request) {
         const token = await new SignJWT({ userId: user.id, username: user.username })
             .setProtectedHeader({ alg: 'HS256' })
             .setExpirationTime('7d')
-            .sign(SECRET_KEY);
+            .sign(JWT_SECRET_KEY);
 
         // 4. Set Cookie
         console.log('[API] Login Successful, generating response');
