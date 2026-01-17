@@ -106,7 +106,9 @@ export default function DashboardPage() {
                 const data = await res.json();
                 setUser(data);
             } else {
-                throw new Error('Not authenticated');
+                const errorData = await res.text();
+                console.error(`Fetch User Error: ${res.status} - ${errorData}`);
+                throw new Error(errorData || 'Not authenticated');
             }
         } catch (error) {
             console.error('Failed to fetch user:', error);

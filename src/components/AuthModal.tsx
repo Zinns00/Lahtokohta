@@ -296,7 +296,7 @@ function SignupForm({ onError, isLoading, setIsLoading, onSuccess }: any) {
                 <input
                     {...register('username')}
                     className={styles.input}
-                    placeholder="영문, 숫자 (3~13자)"
+                    placeholder="한글, 영문, 숫자 (3~13자)"
                 />
                 {errors.username && <p className={styles.errorText}>{errors.username.message}</p>}
             </div>

@@ -243,7 +243,7 @@ export default function ProfileSettingsModal({ isOpen, onClose, user, onSuccess 
                                 </p>
                                 <div className={styles.frameGrid}>
                                     {FRAMES.map((frame) => {
-                                        const isUnlocked = currentLevel >= frame.minLevel || user.username === 'test';
+                                        const isUnlocked = currentLevel >= frame.minLevel || (user as any).role === 'ADMIN';
                                         const isSelected = selectedFrame === frame.id;
 
                                         return (
