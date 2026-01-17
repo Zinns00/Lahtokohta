@@ -17,6 +17,8 @@ interface CreateWorkspaceModalProps {
 export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: CreateWorkspaceModalProps) {
     const [step, setStep] = useState(1);
     const [isEndDateEnabled, setIsEndDateEnabled] = useState(false);
+    const [error, setError] = useState(''); // Validation error state
+
     const [formData, setFormData] = useState({
         title: '',
         difficulty: 'Normal', // 'Easy' | 'Normal' | 'Hard'
@@ -286,10 +288,15 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
                                     <input
                                         type="text"
                                         placeholder="예: 자격증 공부, 코딩 테스트 준비"
+                                        className={error ? styles.inputError : ''}
                                         value={formData.title}
-                                        onChange={e => setFormData({ ...formData, title: e.target.value })}
+                                        onChange={e => {
+                                            setFormData({ ...formData, title: e.target.value });
+                                            if (error) setError('');
+                                        }}
                                         autoFocus
                                     />
+                                    {error && <p className={styles.errorMessage}>{error}</p>}
                                 </label>
 
                                 <label>
@@ -494,7 +501,13 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
                     {step < 3 ? (
                         <button
                             className={styles.nextBtn}
-                            onClick={() => setStep(step + 1)}
+                            onClick={() => {
+                                if (step === 1 && formData.title.length > 50) {
+                                    setError("워크스페이스 이름은 50자 이내로 입력해주세요.");
+                                    return;
+                                }
+                                setStep(step + 1);
+                            }}
                             disabled={step === 1 && !formData.title}
                         >
                             다음
