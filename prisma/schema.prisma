@@ -39,6 +39,10 @@ model Workspace {
   // Local Level System (Tier)
   level       Int      @default(1)
   currentXP   Int      @default(0)
+
+  // Attendance Persistence
+  tableConfig Json?    // Stores { columns: string[], maxDate: string }
+  extraRows   Json?    // Stores custom/non-date rows
   
   // Time & Goals
   startDate   DateTime @default(now())

@@ -3,8 +3,7 @@ import { prisma } from '@/lib/prisma'; // Use Prisma
 import { jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { getUserLevelInfo } from '@/lib/levelSystem';
-
-const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-change-this');
+import { JWT_SECRET_KEY } from '@/lib/auth-constants';
 
 export async function GET(req: Request) {
     try {
@@ -19,7 +18,7 @@ export async function GET(req: Request) {
         }
 
         // Verify JWT
-        const { payload } = await jwtVerify(token, SECRET_KEY);
+        const { payload } = await jwtVerify(token, JWT_SECRET_KEY);
 
         if (!payload.userId) {
             return NextResponse.json(

@@ -2,15 +2,14 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
-
-const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-change-this');
+import { JWT_SECRET_KEY } from '@/lib/auth-constants';
 
 async function getUser(req: Request) {
     const cookieStore = await cookies();
     const token = cookieStore.get('auth_token')?.value;
     if (!token) return null;
     try {
-        const { payload } = await jwtVerify(token, SECRET_KEY);
+        const { payload } = await jwtVerify(token, JWT_SECRET_KEY);
         return payload;
     } catch {
         return null;
