@@ -196,6 +196,12 @@ export default function WorkspaceDetailPage() {
                                     workspaceId={String(workspaceId)}
                                     tasks={workspace.tasks || []}
                                     onAddTask={handleAddTask}
+                                    onXPChange={(newTotalXP) => {
+                                        setWorkspace((prev: any) => ({
+                                            ...prev,
+                                            user: { ...prev.user, totalXP: newTotalXP }
+                                        }));
+                                    }}
                                 />
                             </motion.div>
                         )}

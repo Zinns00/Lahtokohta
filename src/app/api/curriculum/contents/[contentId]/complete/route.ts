@@ -88,7 +88,7 @@ export async function POST(
         const workspaceId = content.chapter.workspaceId;
 
         // Transaction
-        await prisma.$transaction(async (tx) => {
+        const result = await prisma.$transaction(async (tx) => {
             // Update Workspace XP
             const ws = await tx.workspace.findUnique({ where: { id: workspaceId } });
             if (ws) {
@@ -119,19 +119,23 @@ export async function POST(
 
             // Update User XP
             const u = await tx.user.findUnique({ where: { id: userId } });
+            let newTotalXP = 0;
             if (u) {
-                await tx.user.update({
+                const updatedUser = await tx.user.update({
                     where: { id: userId },
                     data: { totalXP: { increment: xpChange } }
                 });
+                newTotalXP = updatedUser.totalXP;
             }
+            return { newTotalXP };
         });
 
         return NextResponse.json({
             content: updatedContent,
             gainedXP: newStatus ? xpAmount : 0,
             removedXP: newStatus ? 0 : xpAmount,
-            isPenalty
+            isPenalty,
+            newTotalXP: result.newTotalXP
         });
 
     } catch (error: any) {

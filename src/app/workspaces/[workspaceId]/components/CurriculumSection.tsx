@@ -5,7 +5,7 @@ import styles from '../page.module.css';
 import {
     FiCheckCircle, FiCircle, FiPlayCircle, FiCode, FiFileText,
     FiChevronDown, FiChevronRight, FiClock, FiPlus, FiMoreHorizontal, FiMessageSquare, FiHash,
-    FiLock, FiUnlock, FiBook, FiUser, FiX, FiRotateCcw
+    FiLock, FiUnlock, FiBook, FiUser, FiX, FiRotateCcw, FiEdit2, FiTrash2
 } from "react-icons/fi";
 import { motion, AnimatePresence } from 'framer-motion';
 import AttendanceRewardModal from '@/components/AttendanceRewardModal';
@@ -44,7 +44,12 @@ interface PersonalPost {
     isDone: boolean;
 }
 
-export default function CurriculumSection({ workspaceId, tasks, onAddTask }: { workspaceId: string, tasks: any[], onAddTask?: (c: string, t: string, p: string) => void }) {
+export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPChange }: {
+    workspaceId: string,
+    tasks: any[],
+    onAddTask?: (c: string, t: string, p: string) => void,
+    onXPChange?: (newTotalXP: number) => void
+}) {
     const [activeTab, setActiveTab] = useState<Tab>('CURRICULUM');
 
     // State for Data
@@ -82,6 +87,10 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask }: { w
     // UI State for Modal
     const [selectedPost, setSelectedPost] = useState<PersonalPost | null>(null);
     const [selectedContent, setSelectedContent] = useState<CurriculumContent | null>(null);
+
+    // Edit State
+    const [editingChapter, setEditingChapter] = useState<{ id: number; title: string; week: string } | null>(null);
+    const [editingContent, setEditingContent] = useState<{ id: number; title: string; desc: string; difficulty: Difficulty } | null>(null);
 
     // Fetch Data
     const fetchData = async () => {
@@ -168,6 +177,95 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask }: { w
     };
 
     // --- Actions ---
+    const handleDeleteChapter = async (chapterId: number) => {
+        if (!confirm("정말 이 챕터를 삭제하시겠습니까?\n하위 컨텐츠도 모두 삭제됩니다.")) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/workspaces/${workspaceId}/chapters/${chapterId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setChapters(prev => prev.filter(c => c.id !== chapterId));
+            }
+        } catch (e) { console.error(e); alert("삭제 실패"); }
+    };
+
+    const handleUpdateChapter = async () => {
+        if (!editingChapter) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/workspaces/${workspaceId}/chapters/${editingChapter.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ title: editingChapter.title, week: editingChapter.week })
+            });
+
+            if (res.ok) {
+                setChapters(prev => prev.map(c => c.id === editingChapter.id ? { ...c, title: editingChapter.title, week: editingChapter.week } : c));
+                setEditingChapter(null);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("수정 실패");
+        }
+    };
+
+    const handleDeleteContent = async (chapterId: number, contentId: number) => {
+        if (!confirm("이 컨텐츠를 삭제하시겠습니까?")) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/curriculum/contents/${contentId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setChapters(prev => prev.map(c => {
+                    if (c.id === chapterId) {
+                        return { ...c, contents: c.contents.filter(cnt => cnt.id !== contentId) };
+                    }
+                    return c;
+                }));
+            }
+        } catch (e) { console.error(e); alert("삭제 실패"); }
+    };
+
+    const handleUpdateContent = async () => {
+        if (!editingContent) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/curriculum/contents/${editingContent.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                    title: editingContent.title,
+                    description: editingContent.desc,
+                    difficulty: editingContent.difficulty
+                })
+            });
+
+            if (res.ok) {
+                setChapters(prev => prev.map(c => {
+                    const idx = c.contents.findIndex(cnt => cnt.id === editingContent.id);
+                    if (idx !== -1) {
+                        const newContents = [...c.contents];
+                        newContents[idx] = {
+                            ...newContents[idx],
+                            title: editingContent.title,
+                            description: editingContent.desc,
+                            difficulty: editingContent.difficulty
+                        };
+                        return { ...c, contents: newContents };
+                    }
+                    return c;
+                }));
+                setEditingContent(null);
+                if (selectedContent && selectedContent.id === editingContent.id) {
+                    setSelectedContent(prev => prev ? { ...prev, title: editingContent.title, description: editingContent.desc, difficulty: editingContent.difficulty } : null);
+                }
+            }
+        } catch (e) { console.error(e); alert("수정 실패"); }
+    };
     const handleForceUnlock = async (e: React.MouseEvent, chapterId: number) => {
         e.stopPropagation();
         if (!confirm("이 챕터를 강제로 해금하시겠습니까?\n강제 해금 시 획득 경험치가 30% 감소합니다.")) return;
@@ -268,6 +366,11 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask }: { w
                         addedXP: result.gainedXP
                     });
                     setIsRewardOpen(true);
+                }
+
+                // Update User XP in parent
+                if (onXPChange && result.newTotalXP !== undefined) {
+                    onXPChange(result.newTotalXP);
                 }
             } else {
                 // Revert on failure
@@ -432,6 +535,19 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask }: { w
                                                 <div style={{ fontSize: '0.8rem', color: getStatusColor(status), fontWeight: 600, marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                     {module.week} • {status.replace('_', ' ')}
                                                     {module.isForcedUnlocked && <span style={{ fontSize: '0.7rem', color: '#ef4444', border: '1px solid #ef4444', padding: '0 4px', borderRadius: '4px' }}>PENALTY ACTIVE (-30%)</span>}
+                                                    {/* Edit/Delete Chapter Icons */}
+                                                    <div style={{ display: 'flex', gap: '4px', marginLeft: '8px' }} onClick={e => e.stopPropagation()}>
+                                                        <button
+                                                            onClick={() => setEditingChapter({ id: module.id, title: module.title, week: module.week })}
+                                                            style={{ background: 'transparent', border: 'none', color: '#52525b', cursor: 'pointer', padding: 2 }}>
+                                                            <FiEdit2 size={12} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteChapter(module.id)}
+                                                            style={{ background: 'transparent', border: 'none', color: '#52525b', cursor: 'pointer', padding: 2 }}>
+                                                            <FiTrash2 size={12} />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                     <h3 style={{ fontSize: '1rem', color: isCompleted ? '#d1fae5' : isLocked ? '#a1a1aa' : '#e4e4e7', margin: 0, textDecoration: isCompleted ? 'line-through' : 'none' }}>
@@ -505,8 +621,23 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask }: { w
                                                                 {item.isDone ? <FiCheckCircle size={18} /> : getTypeIcon(item.type)}
                                                             </div>
                                                             <div style={{ flex: 1 }}>
-                                                                <div style={{ color: '#e4e4e7', fontSize: '0.9rem', textDecoration: item.isDone ? 'line-through' : 'none' }}>
-                                                                    {item.title}
+                                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                    <div style={{ color: '#e4e4e7', fontSize: '0.9rem', textDecoration: item.isDone ? 'line-through' : 'none' }}>
+                                                                        {item.title}
+                                                                    </div>
+                                                                    {/* Edit/Delete Content Icons */}
+                                                                    <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: '4px', opacity: 0.5 }}>
+                                                                        <button
+                                                                            onClick={() => setEditingContent({ id: item.id, title: item.title, desc: item.description || '', difficulty: item.difficulty as Difficulty })}
+                                                                            style={{ background: 'transparent', border: 'none', color: '#a1a1aa', cursor: 'pointer', padding: 4 }}>
+                                                                            <FiEdit2 size={14} />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleDeleteContent(module.id, item.id)}
+                                                                            style={{ background: 'transparent', border: 'none', color: '#a1a1aa', cursor: 'pointer', padding: 4 }}>
+                                                                            <FiTrash2 size={14} />
+                                                                        </button>
+                                                                    </div>
                                                                 </div>
                                                                 <div style={{ color: '#71717a', fontSize: '0.75rem', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                                     {item.difficulty ? (
@@ -940,6 +1071,77 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask }: { w
                     </div>
                 )
             }
+            {/* --- EDIT MODAL (Chapter) --- */}
+            {editingChapter && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+                    backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+                    zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }} onClick={() => setEditingChapter(null)}>
+                    <div onClick={e => e.stopPropagation()} style={{
+                        width: '400px', backgroundColor: '#18181b', padding: '24px', borderRadius: '16px', border: '1px solid #3f3f46'
+                    }}>
+                        <h3 style={{ color: '#fff', marginBottom: '16px' }}>챕터 수정</h3>
+                        <input
+                            value={editingChapter.week}
+                            onChange={e => setEditingChapter({ ...editingChapter, week: e.target.value })}
+                            placeholder="Week (예: Week 1)"
+                            style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '8px', background: '#27272a', border: '1px solid #3f3f46', color: '#fff' }}
+                        />
+                        <input
+                            value={editingChapter.title}
+                            onChange={e => setEditingChapter({ ...editingChapter, title: e.target.value })}
+                            placeholder="Chapter Title"
+                            style={{ width: '100%', padding: '10px', marginBottom: '20px', borderRadius: '8px', background: '#27272a', border: '1px solid #3f3f46', color: '#fff' }}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                            <button onClick={() => setEditingChapter(null)} style={{ padding: '8px 16px', borderRadius: '8px', background: '#3f3f46', color: '#fff', border: 'none', cursor: 'pointer' }}>취소</button>
+                            <button onClick={handleUpdateChapter} style={{ padding: '8px 16px', borderRadius: '8px', background: '#3b82f6', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>수정 완료</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- EDIT MODAL (Content) --- */}
+            {editingContent && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+                    backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+                    zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }} onClick={() => setEditingContent(null)}>
+                    <div onClick={e => e.stopPropagation()} style={{
+                        width: '500px', backgroundColor: '#18181b', padding: '24px', borderRadius: '16px', border: '1px solid #3f3f46'
+                    }}>
+                        <h3 style={{ color: '#fff', marginBottom: '16px' }}>컨텐츠 수정</h3>
+                        <input
+                            value={editingContent.title}
+                            onChange={e => setEditingContent({ ...editingContent, title: e.target.value })}
+                            placeholder="Content Title"
+                            style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '8px', background: '#27272a', border: '1px solid #3f3f46', color: '#fff' }}
+                        />
+                        <textarea
+                            value={editingContent.desc}
+                            onChange={e => setEditingContent({ ...editingContent, desc: e.target.value })}
+                            placeholder="Description"
+                            rows={4}
+                            style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '8px', background: '#27272a', border: '1px solid #3f3f46', color: '#fff', resize: 'vertical' }}
+                        />
+                        <select
+                            value={editingContent.difficulty}
+                            onChange={e => setEditingContent({ ...editingContent, difficulty: e.target.value as Difficulty })}
+                            style={{ width: '100%', padding: '10px', marginBottom: '20px', borderRadius: '8px', background: '#27272a', border: '1px solid #3f3f46', color: '#fff' }}
+                        >
+                            <option value="EASY">EASY (10~150 XP)</option>
+                            <option value="NORMAL">NORMAL (150~450 XP)</option>
+                            <option value="HARD">HARD (450~1000 XP)</option>
+                        </select>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                            <button onClick={() => setEditingContent(null)} style={{ padding: '8px 16px', borderRadius: '8px', background: '#3f3f46', color: '#fff', border: 'none', cursor: 'pointer' }}>취소</button>
+                            <button onClick={handleUpdateContent} style={{ padding: '8px 16px', borderRadius: '8px', background: '#3b82f6', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>수정 완료</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </section >
     );
 }
