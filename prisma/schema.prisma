@@ -72,6 +72,7 @@ model Workspace {
 
 model Task {
   id          Int      @id @default(autoincrement())
+  title       String   @default("")
   content     String
   isDone      Boolean  @default(false)
   xpReward    Int      @default(10)

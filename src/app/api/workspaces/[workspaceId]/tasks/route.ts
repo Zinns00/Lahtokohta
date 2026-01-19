@@ -58,15 +58,21 @@ export async function POST(
         const body = await request.json();
         const { title, content, tags, difficulty } = body;
 
+        // Determine XP based on difficulty
+        let xp = 100;
+        if (difficulty === 'EASY') xp = 25;
+        if (difficulty === 'HARD') xp = 250;
+
         const newTask = await prisma.task.create({
             data: {
                 workspaceId: wId,
-                content: title + (content ? `\n\n${content}` : ''),
-
+                title: title || '',
+                content: content || '',
                 type: 'PERSONAL',
-                priority: difficulty === 'HARD' ? 'HIGH' : difficulty === 'EASY' ? 'LOW' : 'MEDIUM', // Backward compat
+                priority: 'MEDIUM',
                 difficulty: difficulty || 'NORMAL',
-                tags: tags || []
+                tags: tags || [],
+                xpReward: xp
             }
         });
 

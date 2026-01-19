@@ -93,6 +93,11 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
     const [editingContent, setEditingContent] = useState<{ id: number; title: string; desc: string; difficulty: Difficulty } | null>(null);
     const [openChapterMenu, setOpenChapterMenu] = useState<number | null>(null);
     const [openContentMenu, setOpenContentMenu] = useState(false);
+    const [openPersonalMenu, setOpenPersonalMenu] = useState(false);
+    const [openPersonalItemMenu, setOpenPersonalItemMenu] = useState<number | null>(null);
+    const [editingPersonalPost, setEditingPersonalPost] = useState<{ id: number; title: string; content: string; difficulty: Difficulty; tags: string[] } | null>(null);
+    const [deletingPersonalPost, setDeletingPersonalPost] = useState<number | null>(null);
+    const [deletingContentId, setDeletingContentId] = useState<number | null>(null);
 
     // Fetch Data
     const fetchData = async () => {
@@ -109,6 +114,24 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                     const firstUnlocked = data.find((c: Chapter) => !c.isLocked);
                     if (firstUnlocked) setOpenModules([firstUnlocked.id]);
                 }
+            }
+
+            // Fetch Personal Tasks
+            const resTasks = await fetch(`/api/workspaces/${workspaceId}/tasks`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (resTasks.ok) {
+                const tasksData = await resTasks.json();
+                const mapped = tasksData.map((t: any) => ({
+                    id: t.id,
+                    title: t.title || t.content,
+                    content: t.content,
+                    difficulty: (t.difficulty || 'NORMAL') as Difficulty,
+                    tags: t.tags || [],
+                    createdAt: new Date(t.createdAt).toLocaleDateString(),
+                    isDone: t.isDone
+                }));
+                setPersonalList(mapped);
             }
         } catch (e) {
             console.error(e);
@@ -213,8 +236,14 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
         }
     };
 
-    const handleDeleteContent = async (chapterId: number, contentId: number) => {
-        if (!confirm("이 컨텐츠를 삭제하시겠습니까?")) return;
+    const handleDeleteContent = (chapterId: number, contentId: number) => {
+        setDeletingContentId(contentId);
+    };
+
+    const confirmDeleteContent = async () => {
+        if (!deletingContentId) return;
+        const contentId = deletingContentId;
+
         try {
             const token = localStorage.getItem('token');
             const res = await fetch(`/api/curriculum/contents/${contentId}`, {
@@ -222,14 +251,17 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
-                setChapters(prev => prev.map(c => {
-                    if (c.id === chapterId) {
-                        return { ...c, contents: c.contents.filter(cnt => cnt.id !== contentId) };
-                    }
-                    return c;
-                }));
+                setChapters(prev => prev.map(c => ({
+                    ...c,
+                    contents: c.contents.filter(cnt => cnt.id !== contentId)
+                })));
+                setDeletingContentId(null);
+                setSelectedContent(null);
+                setOpenContentMenu(false);
+            } else {
+                alert("삭제 실패");
             }
-        } catch (e) { console.error(e); alert("삭제 실패"); }
+        } catch (e) { console.error(e); }
     };
 
     const handleUpdateContent = async () => {
@@ -413,27 +445,134 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
         setNewPersonalTags(newPersonalTags.filter(tag => tag !== tagToRemove));
     };
 
-    const handleCreatePersonal = () => {
+    const handleCreatePersonal = async () => {
         if (!newPersonalTitle.trim()) return;
-        const newPost: PersonalPost = {
-            id: Date.now(),
-            title: newPersonalTitle,
-            content: newPersonalContent,
-            difficulty: newPersonalDifficulty,
-            tags: newPersonalTags.length > 0 ? newPersonalTags : ['General'],
-            createdAt: new Date().toLocaleDateString(),
-            isDone: false
-        };
-        setPersonalList([newPost, ...personalList]);
-        if (onAddTask) {
-            onAddTask(newPersonalTitle, 'PERSONAL', newPersonalDifficulty === 'HARD' ? 'HIGH' : newPersonalDifficulty === 'EASY' ? 'LOW' : 'MEDIUM');
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/workspaces/${workspaceId}/tasks`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title: newPersonalTitle,
+                    content: newPersonalContent,
+                    difficulty: newPersonalDifficulty,
+                    tags: newPersonalTags
+                })
+            });
+
+            if (res.ok) {
+                const newTask = await res.json();
+                const newPost: PersonalPost = {
+                    id: newTask.id,
+                    title: newTask.title || newTask.content,
+                    content: newTask.content, // Simplified for now
+                    difficulty: (newTask.difficulty || 'NORMAL') as Difficulty,
+                    tags: newTask.tags || [],
+                    createdAt: new Date(newTask.createdAt).toLocaleDateString(),
+                    isDone: newTask.isDone
+                };
+                setPersonalList([newPost, ...personalList]);
+
+                setNewPersonalTitle('');
+                setNewPersonalContent('');
+                setNewPersonalCategoryInput('');
+                setNewPersonalTags([]);
+                setNewPersonalDifficulty('NORMAL');
+                setIsCreatingPersonal(false);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Failed to create post");
         }
-        setNewPersonalTitle('');
-        setNewPersonalContent('');
-        setNewPersonalCategoryInput('');
-        setNewPersonalTags([]);
-        setNewPersonalDifficulty('NORMAL');
-        setIsCreatingPersonal(false);
+    };
+
+    const handleTogglePersonal = async (post: PersonalPost) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/workspaces/${workspaceId}/tasks/${post.id}/toggle`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const result = await res.json();
+                setPersonalList(prev => prev.map(p => p.id === post.id ? { ...p, isDone: result.task.isDone } : p));
+                if (selectedPost && selectedPost.id === post.id) {
+                    setSelectedPost(prev => prev ? { ...prev, isDone: result.task.isDone } : null);
+                }
+                if (onXPChange && result.newTotalXP !== undefined) {
+                    onXPChange(result.newTotalXP);
+                }
+
+                if (result.task.isDone) {
+                    let xp = 100;
+                    if (post.difficulty === 'EASY') xp = 25;
+                    if (post.difficulty === 'HARD') xp = 250;
+                    setRewardData({
+                        streak: 1,
+                        addedXP: xp
+                    });
+                    setIsRewardOpen(true);
+                }
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    const handleUpdatePersonal = async (postId: number, data: Partial<PersonalPost>) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/workspaces/${workspaceId}/tasks/${postId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title: data.title,
+                    content: data.content,
+                    difficulty: data.difficulty,
+                    tags: data.tags
+                })
+            });
+
+            if (res.ok) {
+                setPersonalList(prev => prev.map(p => p.id === postId ? { ...p, ...data } : p));
+                if (selectedPost && selectedPost.id === postId) {
+                    setSelectedPost(prev => prev ? { ...prev, ...data } : null);
+                }
+                setEditingPersonalPost(null);
+            } else {
+                alert("수정 실패");
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const handleDeletePersonal = (postId: number) => {
+        setDeletingPersonalPost(postId);
+    };
+
+    const confirmDeletePersonal = async () => {
+        if (!deletingPersonalPost) return;
+        const postId = deletingPersonalPost;
+
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/workspaces/${workspaceId}/tasks/${postId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setPersonalList(prev => prev.filter(p => p.id !== postId));
+                setSelectedPost(null);
+                setDeletingPersonalPost(null);
+            } else {
+                alert("삭제 실패");
+            }
+        } catch (e) { console.error(e); }
     };
 
     // Loading State
@@ -858,7 +997,81 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                                                     </span>
                                                 ))}
                                             </div>
-                                            <FiMoreHorizontal color="#71717a" />
+                                            <div style={{ position: 'relative' }}>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setOpenPersonalItemMenu(openPersonalItemMenu === post.id ? null : post.id);
+                                                    }}
+                                                    style={{
+                                                        background: 'transparent',
+                                                        border: 'none',
+                                                        color: openPersonalItemMenu === post.id ? '#e4e4e7' : '#71717a',
+                                                        cursor: 'pointer', display: 'flex', alignItems: 'center',
+                                                        padding: '4px', borderRadius: '4px'
+                                                    }}
+                                                >
+                                                    <FiMoreHorizontal />
+                                                </button>
+                                                {openPersonalItemMenu === post.id && (
+                                                    <div style={{
+                                                        position: 'absolute', top: '100%', right: '0',
+                                                        marginTop: '4px',
+                                                        backgroundColor: '#18181b',
+                                                        border: '1px solid #3f3f46',
+                                                        borderRadius: '8px',
+                                                        padding: '4px',
+                                                        zIndex: 20,
+                                                        minWidth: '100px',
+                                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
+                                                    }}>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setEditingPersonalPost({
+                                                                    id: post.id,
+                                                                    title: post.title,
+                                                                    content: post.content,
+                                                                    difficulty: post.difficulty,
+                                                                    tags: post.tags
+                                                                });
+                                                                setOpenPersonalItemMenu(null);
+                                                            }}
+                                                            style={{
+                                                                width: '100%', padding: '6px 10px',
+                                                                background: 'transparent', border: 'none',
+                                                                color: '#fbbf24', fontSize: '0.8rem',
+                                                                textAlign: 'left', cursor: 'pointer',
+                                                                display: 'flex', alignItems: 'center', gap: '6px',
+                                                                borderRadius: '4px'
+                                                            }}
+                                                            onMouseOver={e => e.currentTarget.style.background = '#27272a'}
+                                                            onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                        >
+                                                            <FiEdit2 size={12} /> 수정
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDeletePersonal(post.id);
+                                                                setOpenPersonalItemMenu(null);
+                                                            }}
+                                                            style={{
+                                                                width: '100%', padding: '6px 10px',
+                                                                background: 'transparent', border: 'none',
+                                                                color: '#ef4444', fontSize: '0.8rem',
+                                                                textAlign: 'left', cursor: 'pointer',
+                                                                display: 'flex', alignItems: 'center', gap: '6px',
+                                                                borderRadius: '4px'
+                                                            }}
+                                                            onMouseOver={e => e.currentTarget.style.background = '#27272a'}
+                                                            onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                        >
+                                                            <FiTrash2 size={12} /> 삭제
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
 
                                         <h3 style={{ margin: 0, color: '#e4e4e7', fontSize: '1.1rem', lineHeight: 1.4 }}>{post.title}</h3>
@@ -1162,9 +1375,91 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                                         Created on {selectedPost.createdAt}
                                     </div>
                                 </div>
-                                <button onClick={() => setSelectedPost(null)} style={{ background: 'none', border: 'none', color: '#71717a', fontSize: '1.5rem', cursor: 'pointer' }}>
-                                    &times;
-                                </button>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    {/* Personal Menu */}
+                                    <div style={{ position: 'relative' }}>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setOpenPersonalMenu(!openPersonalMenu);
+                                            }}
+                                            style={{
+                                                background: 'transparent',
+                                                border: 'none',
+                                                color: openPersonalMenu ? '#e4e4e7' : '#71717a',
+                                                cursor: 'pointer', display: 'flex', alignItems: 'center',
+                                                padding: '4px', borderRadius: '4px', transition: 'color 0.2s',
+                                            }}
+                                            onMouseOver={e => e.currentTarget.style.color = '#e4e4e7'}
+                                            onMouseOut={e => e.currentTarget.style.color = openPersonalMenu ? '#e4e4e7' : '#71717a'}
+                                        >
+                                            <FiMoreHorizontal size={22} />
+                                        </button>
+
+                                        {openPersonalMenu && (
+                                            <div style={{
+                                                position: 'absolute', top: '100%', right: '0',
+                                                marginTop: '8px',
+                                                backgroundColor: '#18181b',
+                                                border: '1px solid #3f3f46',
+                                                borderRadius: '8px',
+                                                padding: '4px',
+                                                zIndex: 50,
+                                                minWidth: '120px',
+                                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
+                                            }}>
+                                                <button
+                                                    onClick={() => {
+                                                        setEditingPersonalPost({
+                                                            id: selectedPost.id,
+                                                            title: selectedPost.title,
+                                                            content: selectedPost.content,
+                                                            difficulty: selectedPost.difficulty,
+                                                            tags: selectedPost.tags
+                                                        });
+                                                        setOpenPersonalMenu(false);
+                                                        setSelectedPost(null);
+                                                    }}
+                                                    style={{
+                                                        width: '100%', padding: '8px 12px',
+                                                        background: 'transparent', border: 'none',
+                                                        color: '#fbbf24', fontSize: '0.85rem',
+                                                        textAlign: 'left', cursor: 'pointer',
+                                                        display: 'flex', alignItems: 'center', gap: '8px',
+                                                        borderRadius: '4px'
+                                                    }}
+                                                    onMouseOver={e => e.currentTarget.style.background = '#27272a'}
+                                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                >
+                                                    <FiEdit2 size={14} /> 수정하기
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        handleDeletePersonal(selectedPost.id);
+                                                        setOpenPersonalMenu(false);
+                                                    }}
+                                                    style={{
+                                                        width: '100%', padding: '8px 12px',
+                                                        background: 'transparent', border: 'none',
+                                                        color: '#ef4444', fontSize: '0.85rem',
+                                                        textAlign: 'left', cursor: 'pointer',
+                                                        display: 'flex', alignItems: 'center', gap: '8px',
+                                                        borderRadius: '4px'
+                                                    }}
+                                                    onMouseOver={e => e.currentTarget.style.background = '#27272a'}
+                                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                >
+                                                    <FiTrash2 size={14} /> 삭제하기
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <button onClick={() => setSelectedPost(null)} style={{ background: 'none', border: 'none', color: '#71717a', fontSize: '1.5rem', cursor: 'pointer' }}>
+                                        &times;
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Body */}
@@ -1188,16 +1483,26 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                                             {selectedPost.isDone ? '완료됨 (Done)' : '진행중 (In Progress)'}
                                         </div>
                                     </div>
-                                    <button // Keep disabled if personal for now as API not fully ready
-                                        disabled
+                                    <button
+                                        onClick={() => handleTogglePersonal(selectedPost)}
                                         style={{
-                                            padding: '10px 20px', backgroundColor: selectedPost.isDone ? '#27272a' : '#3b82f6',
-                                            color: selectedPost.isDone ? '#71717a' : '#fff',
-                                            border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: selectedPost.isDone ? 'default' : 'not-allowed',
-                                            opacity: 0.5
+                                            padding: '10px 20px',
+                                            backgroundColor: selectedPost.isDone ? '#3f3f46' : '#3b82f6',
+                                            color: selectedPost.isDone ? '#a1a1aa' : '#fff',
+                                            border: 'none', borderRadius: '8px', fontWeight: 'bold',
+                                            cursor: 'pointer',
+                                            display: 'flex', alignItems: 'center', gap: '8px'
                                         }}
                                     >
-                                        {selectedPost.isDone ? '이미 완료됨' : '완료 처리 (Coming Soon)'}
+                                        {selectedPost.isDone ? (
+                                            <>
+                                                <FiRotateCcw /> 완료 취소
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FiCheckCircle /> 목표 달성
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             </div>
@@ -1272,6 +1577,186 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                             <button onClick={() => setEditingContent(null)} style={{ padding: '8px 16px', borderRadius: '8px', background: '#3f3f46', color: '#fff', border: 'none', cursor: 'pointer' }}>취소</button>
                             <button onClick={handleUpdateContent} style={{ padding: '8px 16px', borderRadius: '8px', background: '#3b82f6', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>수정 완료</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- EDIT MODAL (Personal Post) --- */}
+            {editingPersonalPost && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+                    backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+                    zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }} onClick={() => setEditingPersonalPost(null)}>
+                    <div onClick={e => e.stopPropagation()} style={{
+                        width: '600px', maxWidth: '90vw', backgroundColor: '#18181b', padding: '24px', borderRadius: '16px', border: '1px solid #3f3f46',
+                        maxHeight: '90vh', overflowY: 'auto'
+                    }}>
+                        <h3 style={{ color: '#fff', marginBottom: '20px', fontSize: '1.2rem' }}>목표 수정하기</h3>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <div>
+                                <label style={{ display: 'block', color: '#a1a1aa', fontSize: '0.8rem', marginBottom: '4px' }}>제목</label>
+                                <input
+                                    value={editingPersonalPost.title}
+                                    onChange={e => setEditingPersonalPost({ ...editingPersonalPost, title: e.target.value })}
+                                    style={{ width: '100%', padding: '12px', borderRadius: '8px', background: '#27272a', border: '1px solid #3f3f46', color: '#fff' }}
+                                />
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', color: '#a1a1aa', fontSize: '0.8rem', marginBottom: '4px' }}>내용</label>
+                                <textarea
+                                    value={editingPersonalPost.content}
+                                    onChange={e => setEditingPersonalPost({ ...editingPersonalPost, content: e.target.value })}
+                                    rows={5}
+                                    style={{ width: '100%', padding: '12px', borderRadius: '8px', background: '#27272a', border: '1px solid #3f3f46', color: '#fff', resize: 'vertical' }}
+                                />
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '20px' }}>
+                                <div style={{ flex: 1 }}>
+                                    <label style={{ display: 'block', color: '#a1a1aa', fontSize: '0.8rem', marginBottom: '4px' }}>난이도</label>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        {(['EASY', 'NORMAL', 'HARD'] as Difficulty[]).map(diff => (
+                                            <button
+                                                key={diff}
+                                                onClick={() => setEditingPersonalPost({ ...editingPersonalPost, difficulty: diff })}
+                                                style={{
+                                                    flex: 1, padding: '8px', borderRadius: '6px',
+                                                    border: editingPersonalPost.difficulty === diff ? `1px solid ${getDifficultyColor(diff)}` : '1px solid #3f3f46',
+                                                    background: editingPersonalPost.difficulty === diff ? `${getDifficultyColor(diff)}20` : 'transparent',
+                                                    color: editingPersonalPost.difficulty === diff ? getDifficultyColor(diff) : '#71717a',
+                                                    cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600
+                                                }}
+                                            >
+                                                {diff}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #27272a' }}>
+                            <button onClick={() => setEditingPersonalPost(null)} style={{ padding: '10px 18px', borderRadius: '8px', background: '#3f3f46', color: '#fff', border: 'none', cursor: 'pointer' }}>취소</button>
+                            <button
+                                onClick={() => {
+                                    handleUpdatePersonal(editingPersonalPost.id, {
+                                        title: editingPersonalPost.title,
+                                        content: editingPersonalPost.content,
+                                        difficulty: editingPersonalPost.difficulty,
+                                        tags: editingPersonalPost.tags
+                                    });
+                                    setEditingPersonalPost(null);
+                                }}
+                                style={{ padding: '10px 18px', borderRadius: '8px', background: '#3b82f6', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
+                                수정 완료
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- DELETE CONFIRMATION MODAL --- */}
+            {deletingPersonalPost && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+                    backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)',
+                    zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }} onClick={() => setDeletingPersonalPost(null)}>
+                    <div onClick={e => e.stopPropagation()} style={{
+                        width: '400px', backgroundColor: '#18181b', padding: '24px', borderRadius: '16px', border: '1px solid #3f3f46',
+                        textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                    }}>
+                        <div style={{
+                            width: '60px', height: '60px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                            color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            margin: '0 auto 16px auto'
+                        }}>
+                            <FiTrash2 size={32} />
+                        </div>
+                        <h3 style={{ color: '#fff', marginBottom: '8px', fontSize: '1.2rem' }}>정말 삭제하시겠습니까?</h3>
+                        <p style={{ color: '#a1a1aa', marginBottom: '24px', lineHeight: 1.5, fontSize: '0.95rem' }}>
+                            삭제된 데이터는 복구할 수 없습니다.<br />
+                            신중하게 결정해 주세요.
+                        </p>
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={() => setDeletingPersonalPost(null)}
+                                style={{
+                                    flex: 1, padding: '12px', borderRadius: '8px',
+                                    background: '#27272a', color: '#fff', border: '1px solid #3f3f46',
+                                    cursor: 'pointer', fontWeight: 600
+                                }}
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={confirmDeletePersonal}
+                                style={{
+                                    flex: 1, padding: '12px', borderRadius: '8px',
+                                    background: '#ef4444', color: '#fff', border: 'none',
+                                    cursor: 'pointer', fontWeight: 600,
+                                    boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.3)'
+                                }}
+                            >
+                                삭제하기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
+            {/* --- DELETE CONFIRMATION MODAL (Content) --- */}
+            {deletingContentId && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+                    backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)',
+                    zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }} onClick={() => setDeletingContentId(null)}>
+                    <div onClick={e => e.stopPropagation()} style={{
+                        width: '400px', backgroundColor: '#18181b', padding: '24px', borderRadius: '16px', border: '1px solid #3f3f46',
+                        textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                    }}>
+                        <div style={{
+                            width: '60px', height: '60px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                            color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            margin: '0 auto 16px auto'
+                        }}>
+                            <FiTrash2 size={32} />
+                        </div>
+                        <h3 style={{ color: '#fff', marginBottom: '8px', fontSize: '1.2rem' }}>컨텐츠를 삭제하시겠습니까?</h3>
+                        <p style={{ color: '#a1a1aa', marginBottom: '24px', lineHeight: 1.5, fontSize: '0.95rem' }}>
+                            삭제된 데이터는 복구할 수 없습니다.<br />
+                            신중하게 결정해 주세요.
+                        </p>
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={() => setDeletingContentId(null)}
+                                style={{
+                                    flex: 1, padding: '12px', borderRadius: '8px',
+                                    background: '#27272a', color: '#fff', border: '1px solid #3f3f46',
+                                    cursor: 'pointer', fontWeight: 600
+                                }}
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={confirmDeleteContent}
+                                style={{
+                                    flex: 1, padding: '12px', borderRadius: '8px',
+                                    background: '#ef4444', color: '#fff', border: 'none',
+                                    cursor: 'pointer', fontWeight: 600,
+                                    boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.3)'
+                                }}
+                            >
+                                삭제하기
+                            </button>
                         </div>
                     </div>
                 </div>
