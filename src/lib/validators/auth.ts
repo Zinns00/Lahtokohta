@@ -11,7 +11,7 @@ export const signupSchema = z
             .string()
             .min(3, '아이디는 최소 3자 이상이어야 합니다.')
             .max(13, '아이디는 최대 13자까지 가능합니다.')
-            .regex(/^[a-z0-9]+$/, '영문 소문자와 숫자만 사용 가능합니다.'),
+            .regex(/^[a-zA-Z0-9가-힣]+$/, '한글, 영문, 숫자만 사용 가능합니다.'),
         email: z.string().email('유효한 이메일 주소를 입력해주세요.'),
         password: z
             .string()

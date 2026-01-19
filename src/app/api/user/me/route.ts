@@ -35,6 +35,7 @@ export async function GET(req: Request) {
                 title: true,
                 equippedFrame: true,
                 totalXP: true,
+                role: true,
             }
         });
 
