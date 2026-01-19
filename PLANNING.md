@@ -173,3 +173,46 @@
   - `Table Config` 저장 로직 개선: 현재 테이블에 존재하는 **가장 먼 미래의 날짜(Max Date)**를 `localStorage`에 함께 저장하도록 수정.
   - `Data Fetching` 로직 개선: 데이터를 불러올 때 저장된 `Max Date`를 확인하고, 기본 조회 범위보다 더 먼 미래라면 해당 날짜까지 자동으로 빈 행을 생성하여 렌더링.
   - 결과적으로 사용자가 수동으로 추가한 행이 영구적으로 유지되는 경험 제공.
+
+---
+
+## 7단계: 커리큘럼 편집 및 관리 (Curriculum Management) - To Be Implemented
+> **목표**: 생성된 커리큘럼의 오타 수정, 내용 보강, 난이도 재설정 등을 위한 편집 기능을 제공합니다.
+
+### 1. 편집 UX/UI 설계
+- **진입점 (Entry Point)**:
+  - **챕터/컨텐츠 호버 시**: 우측에 `수정(Edit)` 및 `삭제(Delete)` 아이콘(펜/휴지통) 노출.
+  - **상세 모달 내부**: 모달 우측 상단에 `수정` 버튼 배치.
+- **수정 모드 (Edit Mode)**:
+  - **챕터 수정**: `제목`, `주차(Week)` 수정 가능한 모달 팝업.
+  - **컨텐츠 수정**: `제목`, `상세 설명(Description)`, `난이도(Difficulty)` 수정 가능한 모달 팝업.
+
+### 2. API 설계
+- **챕터 수정**: `PATCH /api/workspaces/:id/chapters/:chapterId`
+  - Body: `{ title?, week? }`
+- **컨텐츠 수정**: `PATCH /api/workspaces/:id/chapters/:chapterId/contents/:contentId`
+  - Body: `{ title?, description?, difficulty? }`
+- **삭제**: `DELETE` 메서드 지원 (Cascade 적용 확인).
+
+---
+
+## 현재 구현 요약 (Current Implementation Summary)
+> **[2026-01-19 기준]** 커리큘럼 시스템 MMP 고도화 완료 내역입니다.
+
+### 1. 데이터베이스 연동 (DB Integration)
+- `Prisma` 스키마에 `Chapter`, `CurriculumContent` 모델 정식 도입.
+- `Workspace`와 1:N 관계 설정 및 `Cascade` 삭제 정책 적용.
+
+### 2. 커리큘럼 상세 기능
+- **동적 데이터 로딩**: 하드코딩 데이터를 제거하고 `API`를 통해 실시간 DB 데이터를 불러옵니다.
+- **챕터/컨텐츠 생성**: 프론트엔드 UI를 통해 즉시 DB에 새로운 챕터와 컨텐츠를 추가할 수 있습니다.
+- **완료 및 보상 시스템 (Completion & Rewards)**:
+  - **상태 토글**: 완료/미완료 상태를 자유롭게 전환 가능.
+  - **XP 보상**: 난이도에 따른 랜덤 보상 지급 (Deterministic Random).
+    - `EASY`: 10 ~ 150 XP
+    - `NORMAL`: 150 ~ 450 XP
+    - `HARD`: 450 ~ 1000 XP
+  - **페널티 로직**: 강제 해금(Forced Unlock)된 챕터의 컨텐츠 완료 시 획득 XP 30% 감소.
+- **UI 개선**:
+  - 불필요한 컨텐츠 타입(VOD, CODE 등) 분류 제거 및 심플한 아이콘(`FiFileText`) 통일.
+  - 상세 보기 모달에 **[학습 완료] / [완료 취소]** 버튼 추가.
