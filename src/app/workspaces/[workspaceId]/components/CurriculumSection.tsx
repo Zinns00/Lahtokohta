@@ -91,6 +91,8 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
     // Edit State
     const [editingChapter, setEditingChapter] = useState<{ id: number; title: string; week: string } | null>(null);
     const [editingContent, setEditingContent] = useState<{ id: number; title: string; desc: string; difficulty: Difficulty } | null>(null);
+    const [openChapterMenu, setOpenChapterMenu] = useState<number | null>(null);
+    const [openContentMenu, setOpenContentMenu] = useState(false);
 
     // Fetch Data
     const fetchData = async () => {
@@ -535,18 +537,82 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                                                 <div style={{ fontSize: '0.8rem', color: getStatusColor(status), fontWeight: 600, marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                     {module.week} • {status.replace('_', ' ')}
                                                     {module.isForcedUnlocked && <span style={{ fontSize: '0.7rem', color: '#ef4444', border: '1px solid #ef4444', padding: '0 4px', borderRadius: '4px' }}>PENALTY ACTIVE (-30%)</span>}
-                                                    {/* Edit/Delete Chapter Icons */}
-                                                    <div style={{ display: 'flex', gap: '4px', marginLeft: '8px' }} onClick={e => e.stopPropagation()}>
+                                                    {/* Chapter Menu */}
+                                                    <div style={{ position: 'relative', marginLeft: '8px' }} onClick={e => e.stopPropagation()}>
                                                         <button
-                                                            onClick={() => setEditingChapter({ id: module.id, title: module.title, week: module.week })}
-                                                            style={{ background: 'transparent', border: 'none', color: '#52525b', cursor: 'pointer', padding: 2 }}>
-                                                            <FiEdit2 size={12} />
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setOpenChapterMenu(openChapterMenu === module.id ? null : module.id);
+                                                            }}
+                                                            style={{
+                                                                background: 'transparent',
+                                                                border: 'none',
+                                                                color: openChapterMenu === module.id ? '#e4e4e7' : '#52525b',
+                                                                cursor: 'pointer',
+                                                                padding: '4px',
+                                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                borderRadius: '4px',
+                                                                transition: 'color 0.2s'
+                                                            }}
+                                                            onMouseOver={e => e.currentTarget.style.color = '#e4e4e7'}
+                                                            onMouseOut={e => e.currentTarget.style.color = openChapterMenu === module.id ? '#e4e4e7' : '#52525b'}
+                                                        >
+                                                            <FiMoreHorizontal size={16} />
                                                         </button>
-                                                        <button
-                                                            onClick={() => handleDeleteChapter(module.id)}
-                                                            style={{ background: 'transparent', border: 'none', color: '#52525b', cursor: 'pointer', padding: 2 }}>
-                                                            <FiTrash2 size={12} />
-                                                        </button>
+
+                                                        {/* Dropdown Menu */}
+                                                        {openChapterMenu === module.id && (
+                                                            <div style={{
+                                                                position: 'absolute', top: '100%', left: '0',
+                                                                marginTop: '4px',
+                                                                backgroundColor: '#18181b',
+                                                                border: '1px solid #3f3f46',
+                                                                borderRadius: '8px',
+                                                                padding: '4px',
+                                                                zIndex: 10,
+                                                                minWidth: '120px',
+                                                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
+                                                            }}>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setEditingChapter({ id: module.id, title: module.title, week: module.week });
+                                                                        setOpenChapterMenu(null);
+                                                                    }}
+                                                                    style={{
+                                                                        width: '100%', padding: '8px 12px',
+                                                                        background: 'transparent', border: 'none',
+                                                                        color: '#fbbf24', fontSize: '0.85rem',
+                                                                        textAlign: 'left', cursor: 'pointer',
+                                                                        display: 'flex', alignItems: 'center', gap: '8px',
+                                                                        borderRadius: '4px'
+                                                                    }}
+                                                                    onMouseOver={e => e.currentTarget.style.background = '#27272a'}
+                                                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                                >
+                                                                    <FiEdit2 size={14} /> 수정하기
+                                                                </button>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDeleteChapter(module.id);
+                                                                        setOpenChapterMenu(null);
+                                                                    }}
+                                                                    style={{
+                                                                        width: '100%', padding: '8px 12px',
+                                                                        background: 'transparent', border: 'none',
+                                                                        color: '#ef4444', fontSize: '0.85rem',
+                                                                        textAlign: 'left', cursor: 'pointer',
+                                                                        display: 'flex', alignItems: 'center', gap: '8px',
+                                                                        borderRadius: '4px'
+                                                                    }}
+                                                                    onMouseOver={e => e.currentTarget.style.background = '#27272a'}
+                                                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                                >
+                                                                    <FiTrash2 size={14} /> 삭제하기
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -621,23 +687,8 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                                                                 {item.isDone ? <FiCheckCircle size={18} /> : getTypeIcon(item.type)}
                                                             </div>
                                                             <div style={{ flex: 1 }}>
-                                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                                    <div style={{ color: '#e4e4e7', fontSize: '0.9rem', textDecoration: item.isDone ? 'line-through' : 'none' }}>
-                                                                        {item.title}
-                                                                    </div>
-                                                                    {/* Edit/Delete Content Icons */}
-                                                                    <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: '4px', opacity: 0.5 }}>
-                                                                        <button
-                                                                            onClick={() => setEditingContent({ id: item.id, title: item.title, desc: item.description || '', difficulty: item.difficulty as Difficulty })}
-                                                                            style={{ background: 'transparent', border: 'none', color: '#a1a1aa', cursor: 'pointer', padding: 4 }}>
-                                                                            <FiEdit2 size={14} />
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => handleDeleteContent(module.id, item.id)}
-                                                                            style={{ background: 'transparent', border: 'none', color: '#a1a1aa', cursor: 'pointer', padding: 4 }}>
-                                                                            <FiTrash2 size={14} />
-                                                                        </button>
-                                                                    </div>
+                                                                <div style={{ color: '#e4e4e7', fontSize: '0.9rem', textDecoration: item.isDone ? 'line-through' : 'none' }}>
+                                                                    {item.title}
                                                                 </div>
                                                                 <div style={{ color: '#71717a', fontSize: '0.75rem', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                                     {item.difficulty ? (
@@ -916,12 +967,95 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
                         }}
                     >
-                        <button
-                            onClick={() => setSelectedContent(null)}
-                            style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#71717a', cursor: 'pointer' }}
-                        >
-                            <FiX size={24} />
-                        </button>
+                        <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            {/* Content Menu */}
+                            {(selectedContent as any).chapterId && (
+                                <div style={{ position: 'relative' }}>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setOpenContentMenu(!openContentMenu);
+                                        }}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            color: openContentMenu ? '#e4e4e7' : '#71717a',
+                                            cursor: 'pointer', display: 'flex', alignItems: 'center',
+                                            padding: '4px', borderRadius: '4px', transition: 'color 0.2s',
+                                        }}
+                                        onMouseOver={e => e.currentTarget.style.color = '#e4e4e7'}
+                                        onMouseOut={e => e.currentTarget.style.color = openContentMenu ? '#e4e4e7' : '#71717a'}
+                                        title="설정"
+                                    >
+                                        <FiMoreHorizontal size={22} />
+                                    </button>
+
+                                    {/* Dropdown Menu */}
+                                    {openContentMenu && (
+                                        <div style={{
+                                            position: 'absolute', top: '100%', right: '0',
+                                            marginTop: '8px',
+                                            backgroundColor: '#18181b',
+                                            border: '1px solid #3f3f46',
+                                            borderRadius: '8px',
+                                            padding: '4px',
+                                            zIndex: 10,
+                                            minWidth: '120px',
+                                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
+                                        }}>
+                                            <button
+                                                onClick={() => {
+                                                    setEditingContent({
+                                                        id: selectedContent.id,
+                                                        title: selectedContent.title,
+                                                        desc: selectedContent.description || '',
+                                                        difficulty: selectedContent.difficulty as Difficulty
+                                                    });
+                                                    setOpenContentMenu(false);
+                                                }}
+                                                style={{
+                                                    width: '100%', padding: '8px 12px',
+                                                    background: 'transparent', border: 'none',
+                                                    color: '#fbbf24', fontSize: '0.85rem',
+                                                    textAlign: 'left', cursor: 'pointer',
+                                                    display: 'flex', alignItems: 'center', gap: '8px',
+                                                    borderRadius: '4px'
+                                                }}
+                                                onMouseOver={e => e.currentTarget.style.background = '#27272a'}
+                                                onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                            >
+                                                <FiEdit2 size={14} /> 수정하기
+                                            </button>
+                                            <button
+                                                onClick={async () => {
+                                                    await handleDeleteContent((selectedContent as any).chapterId, selectedContent.id);
+                                                    setSelectedContent(null);
+                                                    setOpenContentMenu(false);
+                                                }}
+                                                style={{
+                                                    width: '100%', padding: '8px 12px',
+                                                    background: 'transparent', border: 'none',
+                                                    color: '#ef4444', fontSize: '0.85rem',
+                                                    textAlign: 'left', cursor: 'pointer',
+                                                    display: 'flex', alignItems: 'center', gap: '8px',
+                                                    borderRadius: '4px'
+                                                }}
+                                                onMouseOver={e => e.currentTarget.style.background = '#27272a'}
+                                                onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                            >
+                                                <FiTrash2 size={14} /> 삭제하기
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            <button
+                                onClick={() => setSelectedContent(null)}
+                                style={{ background: 'transparent', border: 'none', color: '#71717a', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                            >
+                                <FiX size={24} />
+                            </button>
+                        </div>
 
                         <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
                             <span style={{
