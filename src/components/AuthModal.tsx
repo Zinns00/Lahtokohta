@@ -46,6 +46,11 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
                         {/* Header */}
                         <div className={styles.header}>
+                            {/* Logo in Modal */}
+                            <div style={{ fontFamily: 'var(--font-grenze)', fontSize: '2rem', marginBottom: '1rem', textAlign: 'center' }}>
+                                Lähtökohta
+                            </div>
+
                             {isSuccess ? (
                                 <>
                                     <h2 className={styles.title} style={{ color: '#10b981' }}>Success!</h2>

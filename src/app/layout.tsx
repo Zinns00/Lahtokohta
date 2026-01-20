@@ -1,20 +1,28 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { UnifrakturMaguntia, Space_Mono, Grenze_Gotisch } from "next/font/google"; // Gothic & Monospace
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const unifraktur = UnifrakturMaguntia({
+  weight: "400",
   subsets: ["latin"],
+  variable: "--font-gothic",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const grenze = Grenze_Gotisch({
+  weight: ["400", "800"],
   subsets: ["latin"],
+  variable: "--font-grenze",
+});
+
+const spaceMono = Space_Mono({
+  weight: ["400", "700"],
+  subsets: ["latin"],
+  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
-  title: "Lähtökohta",
-  description: "당신의 새로운 시작점, Lähtökohta",
+  title: "Lähtökohta | VOID",
+  description: "Digital Wasteland for Learning, Immersion, and Creation.",
 };
 
 export default function RootLayout({
@@ -23,8 +31,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="ko">
+      <body className={`${unifraktur.variable} ${grenze.variable} ${spaceMono.variable}`}>
         {children}
       </body>
     </html>
