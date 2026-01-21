@@ -61,24 +61,7 @@
   letter-spacing: 1px;
 }
 
-.nav {
-  display: flex;
-  gap: 2rem;
-  font-family: var(--font-mono);
-  font-size: 0.9rem;
-}
 
-.navLink {
-  color: var(--muted);
-  text-transform: uppercase;
-  transition: color 0.3s;
-  letter-spacing: 1px;
-}
-
-.navLink:hover {
-  color: var(--accent);
-  text-shadow: 0 0 8px rgba(192, 192, 192, 0.5);
-}
 
 .loginBtn {
   font-family: var(--font-mono);
