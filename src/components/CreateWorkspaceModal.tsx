@@ -463,7 +463,7 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
                                     <div className={styles.timeControl}>
                                         <button
                                             className={styles.timeBtn}
-                                            onClick={() => setFormData(p => ({ ...p, minStudyHours: p.minStudyHours <= 0 ? 24 : p.minStudyHours - 1 }))}
+                                            onClick={() => setFormData(p => ({ ...p, minStudyHours: p.minStudyHours <= 0 ? 23 : p.minStudyHours - 1 }))}
                                         >-</button>
                                         <div className={styles.timeDisplay}>
                                             <span className={styles.timeValue}>{formData.minStudyHours}</span>
@@ -471,7 +471,7 @@ export default function CreateWorkspaceModal({ isOpen, onClose, onSuccess }: Cre
                                         </div>
                                         <button
                                             className={styles.timeBtn}
-                                            onClick={() => setFormData(p => ({ ...p, minStudyHours: p.minStudyHours >= 24 ? 0 : p.minStudyHours + 1 }))}
+                                            onClick={() => setFormData(p => ({ ...p, minStudyHours: p.minStudyHours >= 23 ? 0 : p.minStudyHours + 1 }))}
                                         >+</button>
                                     </div>
                                     <p className={styles.helperText}>매일 이 시간만큼 공부하면 출석이 인정됩니다.</p>

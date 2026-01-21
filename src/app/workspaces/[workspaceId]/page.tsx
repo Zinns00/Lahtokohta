@@ -193,8 +193,15 @@ export default function WorkspaceDetailPage() {
                                     <p>함께 달성할 목표와 개인 학습 리스트를 관리하세요.</p>
                                 </div>
                                 <CurriculumSection
+                                    workspaceId={String(workspaceId)}
                                     tasks={workspace.tasks || []}
                                     onAddTask={handleAddTask}
+                                    onXPChange={(newTotalXP) => {
+                                        setWorkspace((prev: any) => ({
+                                            ...prev,
+                                            user: { ...prev.user, totalXP: newTotalXP }
+                                        }));
+                                    }}
                                 />
                             </motion.div>
                         )}

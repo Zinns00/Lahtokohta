@@ -5,31 +5,33 @@ import styles from '../page.module.css';
 import {
     FiCheckCircle, FiCircle, FiPlayCircle, FiCode, FiFileText,
     FiChevronDown, FiChevronRight, FiClock, FiPlus, FiMoreHorizontal, FiMessageSquare, FiHash,
-    FiLock, FiUnlock, FiBook, FiUser
+    FiLock, FiUnlock, FiBook, FiUser, FiX, FiRotateCcw, FiEdit2, FiTrash2
 } from "react-icons/fi";
 import { motion, AnimatePresence } from 'framer-motion';
+import AttendanceRewardModal from '@/components/AttendanceRewardModal';
 
 // --- Types ---
 type Tab = 'CURRICULUM' | 'PERSONAL';
 type Difficulty = 'EASY' | 'NORMAL' | 'HARD';
+type ContentType = 'VOD' | 'CODE' | 'TASK' | 'CONCEPT' | 'SETUP';
 
-interface CurriculumItem {
+interface CurriculumContent {
     id: number;
     title: string;
+    description?: string;
     type: string;
-    completed: boolean;
-    difficulty?: Difficulty;
-    content?: string;
+    difficulty: Difficulty;
+    isDone: boolean;
 }
 
-interface CurriculumModule {
+interface Chapter {
     id: number;
     week: string;
     title: string;
-    status: 'COMPLETED' | 'IN_PROGRESS' | 'LOCKED';
-    progress: number;
-    items: CurriculumItem[];
-    isForcedUnlocked?: boolean; // New flag for forced unlock
+    orderIndex: number;
+    isLocked: boolean;
+    isForcedUnlocked: boolean;
+    contents: CurriculumContent[];
 }
 
 interface PersonalPost {
@@ -42,84 +44,110 @@ interface PersonalPost {
     isDone: boolean;
 }
 
-// --- Initial Data ---
-const INITIAL_CURRICULUM: CurriculumModule[] = [
-    {
-        id: 1,
-        week: 'Week 1',
-        title: '풀스택 개발 환경 세팅 & 온보딩',
-        status: 'COMPLETED',
-        progress: 100,
-        items: [
-            { id: 101, title: '개발 툴 설치 (VS Code, Node.js, Git)', type: 'SETUP', completed: true },
-            { id: 102, title: 'Git & GitHub 협업 기초 (Commit, Push, PR)', type: 'VOD', completed: true },
-            { id: 103, title: '1주차 과제: 자기소개 페이지 배포하기', type: 'TASK', completed: true },
-        ]
-    },
-    {
-        id: 2,
-        week: 'Week 2',
-        title: 'React.js 핵심 문법 정복',
-        status: 'IN_PROGRESS',
-        progress: 45,
-        items: [
-            { id: 201, title: 'JSX와 컴포넌트의 이해', type: 'Concept', completed: true },
-            { id: 202, title: 'State와 Props 완벽 가이드', type: 'VOD', completed: false },
-            { id: 203, title: 'Hooks 패턴 (useState, useEffect)', type: 'CODE', completed: false },
-            { id: 204, title: '미니 프로젝트: 투두 리스트 만들기', type: 'TASK', completed: false },
-        ]
-    },
-    {
-        id: 3,
-        week: 'Week 3',
-        title: 'Next.js 14 App Router 심화',
-        status: 'LOCKED',
-        progress: 0,
-        items: [
-            { id: 301, title: 'Server Component vs Client Component', type: 'Concept', completed: false },
-            { id: 302, title: 'Routing & Layout 시스템', type: 'CODE', completed: false },
-        ]
-    }
-];
-
-export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], onAddTask?: (c: string, t: string, p: string) => void }) {
+export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPChange }: {
+    workspaceId: string,
+    tasks: any[],
+    onAddTask?: (c: string, t: string, p: string) => void,
+    onXPChange?: (newTotalXP: number) => void
+}) {
     const [activeTab, setActiveTab] = useState<Tab>('CURRICULUM');
 
     // State for Data
-    const [regularList, setRegularList] = useState<CurriculumModule[]>(INITIAL_CURRICULUM);
+    const [chapters, setChapters] = useState<Chapter[]>([]);
     const [personalList, setPersonalList] = useState<PersonalPost[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     // UI State
-    const [openModules, setOpenModules] = useState<number[]>([2]);
-    const [isCreatingRegular, setIsCreatingRegular] = useState(false);
+    const [openModules, setOpenModules] = useState<number[]>([]);
+    const [isCreatingChapter, setIsCreatingChapter] = useState(false);
     const [isCreatingPersonal, setIsCreatingPersonal] = useState(false);
 
-    // Form State (Regular Item)
-    const [addingItemToModule, setAddingItemToModule] = useState<number | null>(null);
-    const [newItemTitle, setNewItemTitle] = useState('');
-    const [newItemContent, setNewItemContent] = useState('');
-    const [newItemDifficulty, setNewItemDifficulty] = useState<Difficulty>('NORMAL');
+    // Reward Modal State
+    const [rewardData, setRewardData] = useState<{ streak: number, addedXP: number, levelUp?: { prevLevel: number, newLevel: number } } | null>(null);
+    const [isRewardOpen, setIsRewardOpen] = useState(false);
 
-    // Form State (Regular)
-    const [newRegularTitle, setNewRegularTitle] = useState('');
-    const [newRegularWeek, setNewRegularWeek] = useState('');
+    // Form State (Content)
+    const [addingContentToChapter, setAddingContentToChapter] = useState<number | null>(null);
+    const [newContentTitle, setNewContentTitle] = useState('');
+    const [newContentDesc, setNewContentDesc] = useState('');
+    // const [newContentType, setNewContentType] = useState<string>('VOD'); // Removed
+    const [newContentDifficulty, setNewContentDifficulty] = useState<Difficulty>('NORMAL');
+
+    // Form State (Chapter)
+    const [newChapterTitle, setNewChapterTitle] = useState('');
+    const [newChapterWeek, setNewChapterWeek] = useState('');
 
     // Form State (Personal)
     const [newPersonalTitle, setNewPersonalTitle] = useState('');
     const [newPersonalContent, setNewPersonalContent] = useState('');
-    const [newPersonalCategoryInput, setNewPersonalCategoryInput] = useState(''); // Input buffer
-    const [newPersonalTags, setNewPersonalTags] = useState<string[]>([]); // Actual tags list
+    const [newPersonalCategoryInput, setNewPersonalCategoryInput] = useState('');
+    const [newPersonalTags, setNewPersonalTags] = useState<string[]>([]);
     const [newPersonalDifficulty, setNewPersonalDifficulty] = useState<Difficulty>('NORMAL');
 
     // UI State for Modal
     const [selectedPost, setSelectedPost] = useState<PersonalPost | null>(null);
-    const [selectedItem, setSelectedItem] = useState<CurriculumItem | null>(null);
+    const [selectedContent, setSelectedContent] = useState<CurriculumContent | null>(null);
+
+    // Edit State
+    const [editingChapter, setEditingChapter] = useState<{ id: number; title: string; week: string } | null>(null);
+    const [editingContent, setEditingContent] = useState<{ id: number; title: string; desc: string; difficulty: Difficulty } | null>(null);
+    const [openChapterMenu, setOpenChapterMenu] = useState<number | null>(null);
+    const [openContentMenu, setOpenContentMenu] = useState(false);
+    const [openPersonalMenu, setOpenPersonalMenu] = useState(false);
+    const [openPersonalItemMenu, setOpenPersonalItemMenu] = useState<number | null>(null);
+    const [editingPersonalPost, setEditingPersonalPost] = useState<{ id: number; title: string; content: string; difficulty: Difficulty; tags: string[] } | null>(null);
+    const [deletingPersonalPost, setDeletingPersonalPost] = useState<number | null>(null);
+    const [deletingContentId, setDeletingContentId] = useState<number | null>(null);
+
+    // Fetch Data
+    const fetchData = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/workspaces/${workspaceId}/chapters`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setChapters(data);
+                // Open first unlocked chapter or last active
+                if (data.length > 0 && openModules.length === 0) {
+                    const firstUnlocked = data.find((c: Chapter) => !c.isLocked);
+                    if (firstUnlocked) setOpenModules([firstUnlocked.id]);
+                }
+            }
+
+            // Fetch Personal Tasks
+            const resTasks = await fetch(`/api/workspaces/${workspaceId}/tasks`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (resTasks.ok) {
+                const tasksData = await resTasks.json();
+                const mapped = tasksData.map((t: any) => ({
+                    id: t.id,
+                    title: t.title || t.content,
+                    content: t.content,
+                    difficulty: (t.difficulty || 'NORMAL') as Difficulty,
+                    tags: t.tags || [],
+                    createdAt: new Date(t.createdAt).toLocaleDateString(),
+                    isDone: t.isDone
+                }));
+                setPersonalList(mapped);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        // Hydrate personal list from props if needed later, for now we mock/local
-        // Just for demo, let's load some initial if empty
+        fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [workspaceId]);
+
+    // Hydrate personal list from props (MVP legacy support + new if API)
+    useEffect(() => {
         if (personalList.length === 0 && tasks && tasks.length > 0) {
-            // Map existing simple tasks to Post format for MVP visualization
             const mapped = tasks.map((t: any) => ({
                 id: t.id,
                 title: t.content,
@@ -129,7 +157,6 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
                 createdAt: new Date(t.createdAt || Date.now()).toLocaleDateString(),
                 isDone: t.isDone
             }));
-            // Deduplicate based on ID to avoid react key warnings if effect runs twice
             const uniqueMapped = mapped.filter((m: any, index: number, self: any[]) =>
                 index === self.findIndex((t: any) => t.id === m.id)
             );
@@ -144,6 +171,14 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
         );
     };
 
+    // Calculate status/progress client-side based on contents
+    const getChapterStatus = (chapter: Chapter) => {
+        if (chapter.isLocked && !chapter.isForcedUnlocked) return 'LOCKED';
+        if (chapter.contents.length === 0) return 'IN_PROGRESS';
+        const completed = chapter.contents.filter(c => c.isDone).length;
+        return completed === chapter.contents.length ? 'COMPLETED' : 'IN_PROGRESS';
+    };
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'COMPLETED': return '#10b981'; // Green
@@ -154,95 +189,246 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
     };
 
     const getTypeIcon = (type: string) => {
-        switch (type) {
-            case 'VOD': return <FiPlayCircle />;
-            case 'CODE': return <FiCode />;
-            case 'TASK': return <FiCheckCircle />;
-            case 'SETUP': return <FiFileText />;
-            default: return <FiCircle />;
+        return <FiFileText />;
+    };
+
+    const getDifficultyColor = (diff: Difficulty) => {
+        switch (diff) {
+            case 'EASY': return '#34d399';
+            case 'NORMAL': return '#60a5fa';
+            case 'HARD': return '#f87171';
+            default: return '#9ca3af';
         }
     };
 
     // --- Actions ---
-    const handleForceUnlock = (e: React.MouseEvent, moduleId: number) => {
-        e.stopPropagation();
-        if (!confirm("이 챕터를 강제로 해금하시겠습니까?\n강제 해금 시 획득 경험치가 감소합니다.")) return;
-
-        setRegularList(prev => prev.map(mod => {
-            if (mod.id === moduleId) {
-                return { ...mod, status: 'IN_PROGRESS', isForcedUnlocked: true };
+    const handleDeleteChapter = async (chapterId: number) => {
+        if (!confirm("정말 이 챕터를 삭제하시겠습니까?\n하위 컨텐츠도 모두 삭제됩니다.")) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/workspaces/${workspaceId}/chapters/${chapterId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setChapters(prev => prev.filter(c => c.id !== chapterId));
             }
-            return mod;
-        }));
-        // Auto open
-        if (!openModules.includes(moduleId)) {
-            toggleModule(moduleId);
+        } catch (e) { console.error(e); alert("삭제 실패"); }
+    };
+
+    const handleUpdateChapter = async () => {
+        if (!editingChapter) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/workspaces/${workspaceId}/chapters/${editingChapter.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ title: editingChapter.title, week: editingChapter.week })
+            });
+
+            if (res.ok) {
+                setChapters(prev => prev.map(c => c.id === editingChapter.id ? { ...c, title: editingChapter.title, week: editingChapter.week } : c));
+                setEditingChapter(null);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("수정 실패");
         }
     };
 
-    const handleCreateRegular = () => {
-        if (!newRegularTitle.trim() || !newRegularWeek.trim()) return;
-        const newModule: CurriculumModule = {
-            id: Date.now(),
-            week: newRegularWeek,
-            title: newRegularTitle,
-            status: 'IN_PROGRESS',
-            progress: 0,
-            items: []
-        };
-        setRegularList([...regularList, newModule]);
-        setNewRegularTitle('');
-        setNewRegularWeek('');
-        setIsCreatingRegular(false);
+    const handleDeleteContent = (chapterId: number, contentId: number) => {
+        setDeletingContentId(contentId);
     };
 
-    const handleAddItem = (moduleId: number) => {
-        if (!newItemTitle.trim()) return;
+    const confirmDeleteContent = async () => {
+        if (!deletingContentId) return;
+        const contentId = deletingContentId;
 
-        setRegularList(prev => prev.map(mod => {
-            if (mod.id === moduleId) {
-                return {
-                    ...mod,
-                    items: [...mod.items, {
-                        id: Date.now(),
-                        title: newItemTitle,
-                        content: newItemContent,
-                        type: 'TASK',
-                        difficulty: newItemDifficulty,
-                        completed: false
-                    }]
-                };
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/curriculum/contents/${contentId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setChapters(prev => prev.map(c => ({
+                    ...c,
+                    contents: c.contents.filter(cnt => cnt.id !== contentId)
+                })));
+                setDeletingContentId(null);
+                setSelectedContent(null);
+                setOpenContentMenu(false);
+            } else {
+                alert("삭제 실패");
             }
-            return mod;
-        }));
-
-        setNewItemTitle('');
-        setNewItemContent('');
-        setAddingItemToModule(null);
-        setNewItemDifficulty('NORMAL');
+        } catch (e) { console.error(e); }
     };
 
-    const toggleItemCompletion = (moduleId: number, itemId: number) => {
-        setRegularList(prev => prev.map(mod => {
-            if (mod.id === moduleId) {
-                const updatedItems = mod.items.map(item =>
-                    item.id === itemId ? { ...item, completed: !item.completed } : item
-                );
-                // Auto-update module progress/status could go here
-                const completedCount = updatedItems.filter(i => i.completed).length;
-                const newProgress = updatedItems.length > 0 ? Math.round((completedCount / updatedItems.length) * 100) : 0;
-                // Keep status as IN_PROGRESS or COMPLETED. If it was LOCKED (forced open), keep IN_PROGRESS unless 100%
-                let newStatus = mod.status;
-                if (newProgress === 100) newStatus = 'COMPLETED';
-                else if (mod.status === 'COMPLETED' && newProgress < 100) newStatus = 'IN_PROGRESS';
-                else if (mod.status === 'LOCKED') newStatus = 'IN_PROGRESS'; // Should not happen via toggle but safe check
+    const handleUpdateContent = async () => {
+        if (!editingContent) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/curriculum/contents/${editingContent.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                    title: editingContent.title,
+                    description: editingContent.desc,
+                    difficulty: editingContent.difficulty
+                })
+            });
 
-                return { ...mod, items: updatedItems, progress: newProgress, status: newStatus };
+            if (res.ok) {
+                setChapters(prev => prev.map(c => {
+                    const idx = c.contents.findIndex(cnt => cnt.id === editingContent.id);
+                    if (idx !== -1) {
+                        const newContents = [...c.contents];
+                        newContents[idx] = {
+                            ...newContents[idx],
+                            title: editingContent.title,
+                            description: editingContent.desc,
+                            difficulty: editingContent.difficulty
+                        };
+                        return { ...c, contents: newContents };
+                    }
+                    return c;
+                }));
+                setEditingContent(null);
+                if (selectedContent && selectedContent.id === editingContent.id) {
+                    setSelectedContent(prev => prev ? { ...prev, title: editingContent.title, description: editingContent.desc, difficulty: editingContent.difficulty } : null);
+                }
             }
-            return mod;
-        }));
+        } catch (e) { console.error(e); alert("수정 실패"); }
+    };
+    const handleForceUnlock = async (e: React.MouseEvent, chapterId: number) => {
+        e.stopPropagation();
+        if (!confirm("이 챕터를 강제로 해금하시겠습니까?\n강제 해금 시 획득 경험치가 30% 감소합니다.")) return;
+
+        setChapters(prev => prev.map(c =>
+            c.id === chapterId ? { ...c, isForcedUnlocked: true } : c
+        ));
+        if (!openModules.includes(chapterId)) toggleModule(chapterId);
     };
 
+    const handleCreateChapter = async () => {
+        if (!newChapterTitle.trim() || !newChapterWeek.trim()) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/workspaces/${workspaceId}/chapters`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ title: newChapterTitle, week: newChapterWeek })
+            });
+            if (res.ok) {
+                const newChapter = await res.json();
+                setChapters(prev => [...prev, { ...newChapter, contents: [] }]); // Ensure contents array exists
+                setNewChapterTitle('');
+                setNewChapterWeek('');
+                setIsCreatingChapter(false);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Failed to create chapter");
+        }
+    };
+
+    const handleAddContent = async (chapterId: number) => {
+        if (!newContentTitle.trim()) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/workspaces/${workspaceId}/chapters/${chapterId}/contents`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                    title: newContentTitle,
+                    description: newContentDesc,
+                    type: 'LESSON', // Hardcoded generic type
+                    difficulty: newContentDifficulty
+                })
+            });
+
+            if (res.ok) {
+                const newContent = await res.json();
+                setChapters(prev => prev.map(c => {
+                    if (c.id === chapterId) {
+                        return { ...c, contents: [...c.contents, newContent] };
+                    }
+                    return c;
+                }));
+                setNewContentTitle('');
+                setNewContentDesc('');
+                setAddingContentToChapter(null);
+                setNewContentDifficulty('NORMAL');
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Failed to add content");
+        }
+    };
+
+    const handleToggleComplete = async (chapterId: number, contentId: number) => {
+        // Optimistic UI
+        const chapterIndex = chapters.findIndex(c => c.id === chapterId);
+        if (chapterIndex === -1) return;
+
+        const contentIndex = chapters[chapterIndex].contents.findIndex(c => c.id === contentId);
+        if (contentIndex === -1) return;
+
+        const content = chapters[chapterIndex].contents[contentIndex];
+        const newStatus = !content.isDone;
+
+        // Apply optimistic update
+        const newChapters = [...chapters];
+        newChapters[chapterIndex].contents[contentIndex].isDone = newStatus;
+        setChapters(newChapters);
+
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/curriculum/contents/${contentId}/complete`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (res.ok) {
+                const result = await res.json();
+                // Result has { gainedXP, removedXP, isPenalty, ... }
+                if (result.gainedXP > 0) {
+                    setRewardData({
+                        streak: 1, // Mock streak for now or fetch from result if we updated API to return it
+                        addedXP: result.gainedXP
+                    });
+                    setIsRewardOpen(true);
+                }
+
+                // Update User XP in parent
+                if (onXPChange && result.newTotalXP !== undefined) {
+                    onXPChange(result.newTotalXP);
+                }
+            } else {
+                // Revert on failure
+                const revertChapters = [...chapters];
+                revertChapters[chapterIndex].contents[contentIndex].isDone = !newStatus;
+                setChapters(revertChapters);
+                alert("Failed to update status");
+            }
+        } catch (e) {
+            console.error(e);
+            // Revert
+            setChapters(prev => prev.map(c => {
+                if (c.id === chapterId) {
+                    return {
+                        ...c,
+                        contents: c.contents.map(cnt => cnt.id === contentId ? { ...cnt, isDone: !newStatus } : cnt)
+                    };
+                }
+                return c;
+            }));
+        }
+    };
+
+    // Personal Forum Logic (Client-side mostly for now per requirement scope, can perform API if needed later)
     const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -259,48 +445,150 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
         setNewPersonalTags(newPersonalTags.filter(tag => tag !== tagToRemove));
     };
 
-    const handleCreatePersonal = () => {
+    const handleCreatePersonal = async () => {
         if (!newPersonalTitle.trim()) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/workspaces/${workspaceId}/tasks`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title: newPersonalTitle,
+                    content: newPersonalContent,
+                    difficulty: newPersonalDifficulty,
+                    tags: newPersonalTags
+                })
+            });
 
-        // Optimistic UI update
-        const newPost: PersonalPost = {
-            id: Date.now(),
-            title: newPersonalTitle,
-            content: newPersonalContent,
-            difficulty: newPersonalDifficulty,
-            tags: newPersonalTags.length > 0 ? newPersonalTags : ['General'],
-            createdAt: new Date().toLocaleDateString(),
-            isDone: false
-        };
+            if (res.ok) {
+                const newTask = await res.json();
+                const newPost: PersonalPost = {
+                    id: newTask.id,
+                    title: newTask.title || newTask.content,
+                    content: newTask.content, // Simplified for now
+                    difficulty: (newTask.difficulty || 'NORMAL') as Difficulty,
+                    tags: newTask.tags || [],
+                    createdAt: new Date(newTask.createdAt).toLocaleDateString(),
+                    isDone: newTask.isDone
+                };
+                setPersonalList([newPost, ...personalList]);
 
-        setPersonalList([newPost, ...personalList]);
-
-        // Call Parent for basic sync if needed (MVP simplified)
-        if (onAddTask) {
-            onAddTask(newPersonalTitle, 'PERSONAL', newPersonalDifficulty === 'HARD' ? 'HIGH' : newPersonalDifficulty === 'EASY' ? 'LOW' : 'MEDIUM');
+                setNewPersonalTitle('');
+                setNewPersonalContent('');
+                setNewPersonalCategoryInput('');
+                setNewPersonalTags([]);
+                setNewPersonalDifficulty('NORMAL');
+                setIsCreatingPersonal(false);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Failed to create post");
         }
-
-        setNewPersonalTitle('');
-        setNewPersonalContent('');
-        setNewPersonalCategoryInput('');
-        setNewPersonalTags([]);
-        setNewPersonalDifficulty('NORMAL');
-        setIsCreatingPersonal(false);
     };
 
-    const getDifficultyColor = (diff: Difficulty) => {
-        switch (diff) {
-            case 'EASY': return '#34d399';
-            case 'NORMAL': return '#60a5fa';
-            case 'HARD': return '#f87171';
-            default: return '#9ca3af';
+    const handleTogglePersonal = async (post: PersonalPost) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/workspaces/${workspaceId}/tasks/${post.id}/toggle`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const result = await res.json();
+                setPersonalList(prev => prev.map(p => p.id === post.id ? { ...p, isDone: result.task.isDone } : p));
+                if (selectedPost && selectedPost.id === post.id) {
+                    setSelectedPost(prev => prev ? { ...prev, isDone: result.task.isDone } : null);
+                }
+                if (onXPChange && result.newTotalXP !== undefined) {
+                    onXPChange(result.newTotalXP);
+                }
+
+                if (result.task.isDone) {
+                    let xp = 100;
+                    if (post.difficulty === 'EASY') xp = 25;
+                    if (post.difficulty === 'HARD') xp = 250;
+                    setRewardData({
+                        streak: 1,
+                        addedXP: xp
+                    });
+                    setIsRewardOpen(true);
+                }
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    const handleUpdatePersonal = async (postId: number, data: Partial<PersonalPost>) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/workspaces/${workspaceId}/tasks/${postId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title: data.title,
+                    content: data.content,
+                    difficulty: data.difficulty,
+                    tags: data.tags
+                })
+            });
+
+            if (res.ok) {
+                setPersonalList(prev => prev.map(p => p.id === postId ? { ...p, ...data } : p));
+                if (selectedPost && selectedPost.id === postId) {
+                    setSelectedPost(prev => prev ? { ...prev, ...data } : null);
+                }
+                setEditingPersonalPost(null);
+            } else {
+                alert("수정 실패");
+            }
+        } catch (e) {
+            console.error(e);
         }
     };
+
+    const handleDeletePersonal = (postId: number) => {
+        setDeletingPersonalPost(postId);
+    };
+
+    const confirmDeletePersonal = async () => {
+        if (!deletingPersonalPost) return;
+        const postId = deletingPersonalPost;
+
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`/api/workspaces/${workspaceId}/tasks/${postId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setPersonalList(prev => prev.filter(p => p.id !== postId));
+                setSelectedPost(null);
+                setDeletingPersonalPost(null);
+            } else {
+                alert("삭제 실패");
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    // Loading State
+    if (isLoading) {
+        return <div style={{ padding: '2rem', textAlign: 'center', color: '#71717a' }}>커리큘럼 로딩중...</div>;
+    }
 
     return (
         <section className={styles.section} style={{ padding: '0 4px', minHeight: '600px' }}>
+            <AttendanceRewardModal
+                isOpen={isRewardOpen}
+                onClose={() => setIsRewardOpen(false)}
+                data={rewardData}
+            />
+
             {/* Top Tabs */}
-            {/* Top Tabs (Premium Motion Design) */}
             <div style={{ display: 'flex', gap: '24px', marginBottom: '2rem', borderBottom: '1px solid #27272a', position: 'relative' }}>
                 {[
                     { id: 'CURRICULUM', label: '정규 커리큘럼', icon: <FiBook size={18} /> },
@@ -313,7 +601,7 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
                             position: 'relative',
                             display: 'flex', alignItems: 'center', gap: '8px',
                             padding: '12px 4px',
-                            marginBottom: '-1px', // Pull down to overlap border
+                            marginBottom: '-1px',
                             background: 'transparent', border: 'none', cursor: 'pointer',
                             fontSize: '0.95rem', fontWeight: activeTab === tab.id ? 700 : 500,
                             color: activeTab === tab.id ? '#e4e4e7' : '#71717a',
@@ -325,7 +613,6 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
                             {tab.icon}
                         </span>
                         <span>{tab.label}</span>
-
                         {activeTab === tab.id && (
                             <motion.div
                                 layoutId="activeTabUnderline"
@@ -344,26 +631,28 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
             {/* --- REGULAR TAB --- */}
             {activeTab === 'CURRICULUM' && (
                 <div style={{ animation: 'fadeIn 0.3s ease' }}>
-
-                    {/* Module List */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {regularList.map((module, idx) => {
+                        {chapters.map((module, idx) => {
                             const isOpen = openModules.includes(module.id);
-                            const isLocked = module.status === 'LOCKED';
-                            const isCompleted = module.status === 'COMPLETED';
+                            // Logic: locked if isLocked is true AND not forced unlocked. 
+                            // If forced unlocked, it looks unlocked but has penalty.
+                            // If locked, it looks locked.
+                            const status = getChapterStatus(module);
+                            const isLocked = module.isLocked && !module.isForcedUnlocked;
+                            const isCompleted = status === 'COMPLETED';
 
                             return (
                                 <div key={module.id} style={{
                                     border: isCompleted ? '1px solid #059669' : '1px solid #27272a',
                                     borderRadius: '12px',
                                     backgroundColor: isCompleted ? '#064e3b20' : '#18181b',
-                                    opacity: isLocked ? 0.7 : 1, // Reduced opacity for locked but visible
+                                    opacity: isLocked ? 0.7 : 1,
                                     overflow: 'hidden',
                                     transition: 'all 0.2s'
                                 }}>
                                     {/* Module Header */}
                                     <div
-                                        onClick={() => toggleModule(module.id)} // Always toggleable now
+                                        onClick={() => toggleModule(module.id)}
                                         style={{
                                             padding: '1.2rem',
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -376,7 +665,7 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
                                                 width: '40px', height: '40px', borderRadius: '8px',
                                                 backgroundColor: isCompleted ? '#059669' : isLocked ? '#27272a' : '#27272a',
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                color: isCompleted ? '#fff' : getStatusColor(module.status),
+                                                color: isCompleted ? '#fff' : getStatusColor(status),
                                                 fontWeight: 'bold',
                                                 border: isLocked ? '1px solid #3f3f46' : 'none',
                                                 boxShadow: isCompleted ? '0 0 10px #05966950' : 'none'
@@ -384,9 +673,86 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
                                                 {isCompleted ? <FiCheckCircle size={20} /> : isLocked ? <FiLock size={18} /> : (idx + 1)}
                                             </div>
                                             <div>
-                                                <div style={{ fontSize: '0.8rem', color: getStatusColor(module.status), fontWeight: 600, marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                    {module.week} • {module.status.replace('_', ' ')}
-                                                    {module.isForcedUnlocked && <span style={{ fontSize: '0.7rem', color: '#ef4444', border: '1px solid #ef4444', padding: '0 4px', borderRadius: '4px' }}>PENALTY ACTIVE</span>}
+                                                <div style={{ fontSize: '0.8rem', color: getStatusColor(status), fontWeight: 600, marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                    {module.week} • {status.replace('_', ' ')}
+                                                    {module.isForcedUnlocked && <span style={{ fontSize: '0.7rem', color: '#ef4444', border: '1px solid #ef4444', padding: '0 4px', borderRadius: '4px' }}>PENALTY ACTIVE (-30%)</span>}
+                                                    {/* Chapter Menu */}
+                                                    <div style={{ position: 'relative', marginLeft: '8px' }} onClick={e => e.stopPropagation()}>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setOpenChapterMenu(openChapterMenu === module.id ? null : module.id);
+                                                            }}
+                                                            style={{
+                                                                background: 'transparent',
+                                                                border: 'none',
+                                                                color: openChapterMenu === module.id ? '#e4e4e7' : '#52525b',
+                                                                cursor: 'pointer',
+                                                                padding: '4px',
+                                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                borderRadius: '4px',
+                                                                transition: 'color 0.2s'
+                                                            }}
+                                                            onMouseOver={e => e.currentTarget.style.color = '#e4e4e7'}
+                                                            onMouseOut={e => e.currentTarget.style.color = openChapterMenu === module.id ? '#e4e4e7' : '#52525b'}
+                                                        >
+                                                            <FiMoreHorizontal size={16} />
+                                                        </button>
+
+                                                        {/* Dropdown Menu */}
+                                                        {openChapterMenu === module.id && (
+                                                            <div style={{
+                                                                position: 'absolute', top: '100%', left: '0',
+                                                                marginTop: '4px',
+                                                                backgroundColor: '#18181b',
+                                                                border: '1px solid #3f3f46',
+                                                                borderRadius: '8px',
+                                                                padding: '4px',
+                                                                zIndex: 10,
+                                                                minWidth: '120px',
+                                                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
+                                                            }}>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setEditingChapter({ id: module.id, title: module.title, week: module.week });
+                                                                        setOpenChapterMenu(null);
+                                                                    }}
+                                                                    style={{
+                                                                        width: '100%', padding: '8px 12px',
+                                                                        background: 'transparent', border: 'none',
+                                                                        color: '#fbbf24', fontSize: '0.85rem',
+                                                                        textAlign: 'left', cursor: 'pointer',
+                                                                        display: 'flex', alignItems: 'center', gap: '8px',
+                                                                        borderRadius: '4px'
+                                                                    }}
+                                                                    onMouseOver={e => e.currentTarget.style.background = '#27272a'}
+                                                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                                >
+                                                                    <FiEdit2 size={14} /> 수정하기
+                                                                </button>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDeleteChapter(module.id);
+                                                                        setOpenChapterMenu(null);
+                                                                    }}
+                                                                    style={{
+                                                                        width: '100%', padding: '8px 12px',
+                                                                        background: 'transparent', border: 'none',
+                                                                        color: '#ef4444', fontSize: '0.85rem',
+                                                                        textAlign: 'left', cursor: 'pointer',
+                                                                        display: 'flex', alignItems: 'center', gap: '8px',
+                                                                        borderRadius: '4px'
+                                                                    }}
+                                                                    onMouseOver={e => e.currentTarget.style.background = '#27272a'}
+                                                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                                >
+                                                                    <FiTrash2 size={14} /> 삭제하기
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                     <h3 style={{ fontSize: '1rem', color: isCompleted ? '#d1fae5' : isLocked ? '#a1a1aa' : '#e4e4e7', margin: 0, textDecoration: isCompleted ? 'line-through' : 'none' }}>
@@ -427,40 +793,40 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
                                                 style={{ borderTop: '1px solid #27272a', backgroundColor: '#0f0f10' }}
                                             >
                                                 <div style={{ padding: '1rem', filter: isLocked ? 'grayscale(1) opacity(0.5)' : 'none', pointerEvents: isLocked ? 'none' : 'auto' }}>
-                                                    {/* Locked Warning */}
+
                                                     {isLocked && (
                                                         <div style={{ marginBottom: '1rem', padding: '0.5rem', border: '1px solid #3f3f46', borderRadius: '6px', color: '#a1a1aa', fontSize: '0.8rem', textAlign: 'center', background: '#18181b' }}>
-                                                            🔒 잠겨있는 챕터입니다. 상단의 '강제 해금' 버튼을 눌러 시작할 수 있습니다. (패널티 적용)
+                                                            🔒 잠겨있는 챕터입니다. 상단의 '강제 해금' 버튼을 눌러 시작할 수 있습니다. (XP 패널티 적용)
                                                         </div>
                                                     )}
 
-                                                    {module.items.length === 0 && (
+                                                    {module.contents.length === 0 && (
                                                         <div style={{ color: '#52525b', fontSize: '0.9rem', textAlign: 'center', padding: '1rem' }}>
                                                             아직 등록된 학습 컨텐츠가 없습니다.
                                                         </div>
                                                     )}
-                                                    {module.items.map((item) => (
+                                                    {module.contents.map((item) => (
                                                         <div
                                                             key={item.id}
-                                                            onClick={() => setSelectedItem(item)}
+                                                            onClick={() => setSelectedContent({ ...item, chapterId: module.id } as any)}
                                                             style={{
                                                                 display: 'flex', alignItems: 'center',
                                                                 padding: '0.8rem', borderRadius: '8px',
                                                                 marginBottom: '0.5rem',
-                                                                backgroundColor: item.completed ? '#18181b' : '#27272a',
-                                                                opacity: item.completed ? 0.7 : 1,
+                                                                backgroundColor: item.isDone ? '#18181b' : '#27272a',
+                                                                opacity: item.isDone ? 0.7 : 1,
                                                                 cursor: 'pointer',
-                                                                border: item.completed ? '1px solid #059669' : '1px solid transparent'
+                                                                border: item.isDone ? '1px solid #059669' : '1px solid transparent'
                                                             }}
                                                         >
                                                             <div
-                                                                onClick={(e) => { e.stopPropagation(); toggleItemCompletion(module.id, item.id); }}
-                                                                style={{ marginRight: '12px', color: item.completed ? '#10b981' : '#fbbf24', cursor: 'pointer', padding: '4px' }}
+                                                                onClick={(e) => { e.stopPropagation(); handleToggleComplete(module.id, item.id); }}
+                                                                style={{ marginRight: '12px', color: item.isDone ? '#10b981' : '#fbbf24', cursor: 'pointer', padding: '4px' }}
                                                             >
-                                                                {item.completed ? <FiCheckCircle size={18} /> : getTypeIcon(item.type)}
+                                                                {item.isDone ? <FiCheckCircle size={18} /> : getTypeIcon(item.type)}
                                                             </div>
                                                             <div style={{ flex: 1 }}>
-                                                                <div style={{ color: '#e4e4e7', fontSize: '0.9rem', textDecoration: item.completed ? 'line-through' : 'none' }}>
+                                                                <div style={{ color: '#e4e4e7', fontSize: '0.9rem', textDecoration: item.isDone ? 'line-through' : 'none' }}>
                                                                     {item.title}
                                                                 </div>
                                                                 <div style={{ color: '#71717a', fontSize: '0.75rem', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -474,35 +840,34 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
                                                         </div>
                                                     ))}
 
-                                                    {/* Add Item Trigger/Form - Only if unlocked */}
+                                                    {/* Add Item Trigger/Form - Only if unlocked (or forced unlocked) */}
                                                     {!isLocked && (
-                                                        addingItemToModule === module.id ? (
+                                                        addingContentToChapter === module.id ? (
                                                             <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#18181b', borderRadius: '8px', border: '1px dashed #3f3f46' }}>
                                                                 <div style={{ fontSize: '0.85rem', color: '#a1a1aa', marginBottom: '8px' }}>새 컨텐츠 추가</div>
                                                                 <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexDirection: 'column' }}>
                                                                     <input
                                                                         placeholder="제목 (예: React Hooks)"
-                                                                        value={newItemTitle} onChange={e => setNewItemTitle(e.target.value)}
+                                                                        value={newContentTitle} onChange={e => setNewContentTitle(e.target.value)}
                                                                         style={{ width: '100%', padding: '10px', borderRadius: '4px', background: '#27272a', border: '1px solid #3f3f46', color: '#fff' }}
                                                                     />
                                                                     <textarea
                                                                         placeholder="상세 내용을 입력하세요 (선택 사항)"
-                                                                        value={newItemContent} onChange={e => setNewItemContent(e.target.value)}
+                                                                        value={newContentDesc} onChange={e => setNewContentDesc(e.target.value)}
                                                                         rows={3}
                                                                         style={{ width: '100%', padding: '10px', borderRadius: '4px', background: '#27272a', border: '1px solid #3f3f46', color: '#fff', resize: 'vertical' }}
                                                                     />
                                                                 </div>
-                                                                {/* Difficulty Buttons */}
                                                                 <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
                                                                     {(['EASY', 'NORMAL', 'HARD'] as Difficulty[]).map(diff => (
                                                                         <button
                                                                             key={diff}
-                                                                            onClick={() => setNewItemDifficulty(diff)}
+                                                                            onClick={() => setNewContentDifficulty(diff)}
                                                                             style={{
                                                                                 padding: '6px 10px', borderRadius: '4px',
-                                                                                border: newItemDifficulty === diff ? `1px solid ${getDifficultyColor(diff)}` : '1px solid #3f3f46',
-                                                                                background: newItemDifficulty === diff ? `${getDifficultyColor(diff)}20` : 'transparent',
-                                                                                color: newItemDifficulty === diff ? getDifficultyColor(diff) : '#71717a',
+                                                                                border: newContentDifficulty === diff ? `1px solid ${getDifficultyColor(diff)}` : '1px solid #3f3f46',
+                                                                                background: newContentDifficulty === diff ? `${getDifficultyColor(diff)}20` : 'transparent',
+                                                                                color: newContentDifficulty === diff ? getDifficultyColor(diff) : '#71717a',
                                                                                 fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600
                                                                             }}
                                                                         >
@@ -512,13 +877,13 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
                                                                 </div>
 
                                                                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'flex-end' }}>
-                                                                    <button onClick={() => setAddingItemToModule(null)} style={{ padding: '6px 12px', background: 'transparent', color: '#71717a', border: 'none', cursor: 'pointer' }}>취소</button>
-                                                                    <button onClick={() => handleAddItem(module.id)} style={{ padding: '6px 12px', background: '#fbbf24', color: '#000', borderRadius: '4px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>추가</button>
+                                                                    <button onClick={() => setAddingContentToChapter(null)} style={{ padding: '6px 12px', background: 'transparent', color: '#71717a', border: 'none', cursor: 'pointer' }}>취소</button>
+                                                                    <button onClick={() => handleAddContent(module.id)} style={{ padding: '6px 12px', background: '#fbbf24', color: '#000', borderRadius: '4px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>추가</button>
                                                                 </div>
                                                             </div>
                                                         ) : (
                                                             <button
-                                                                onClick={(e) => { e.stopPropagation(); setAddingItemToModule(module.id); }}
+                                                                onClick={(e) => { e.stopPropagation(); setAddingContentToChapter(module.id); }}
                                                                 style={{
                                                                     width: '100%', marginTop: '0.5rem', padding: '8px',
                                                                     background: 'transparent', border: '1px dashed #3f3f46', borderRadius: '6px',
@@ -540,10 +905,9 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
                         })}
                     </div>
 
-                    {/* Creation Button (Regular) */}
-                    {!isCreatingRegular ? (
+                    {!isCreatingChapter ? (
                         <button
-                            onClick={() => setIsCreatingRegular(true)}
+                            onClick={() => setIsCreatingChapter(true)}
                             style={{
                                 width: '100%', padding: '16px', marginTop: '1rem',
                                 backgroundColor: '#18181b', border: '1px dashed #3f3f46', borderRadius: '12px',
@@ -561,28 +925,28 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
                             <div style={{ display: 'flex', gap: '10px', marginBottom: '1rem' }}>
                                 <input
                                     type="text" placeholder="예: Week 5"
-                                    value={newRegularWeek} onChange={e => setNewRegularWeek(e.target.value)}
+                                    value={newChapterWeek} onChange={e => setNewChapterWeek(e.target.value)}
                                     style={{ width: '100px', padding: '10px', borderRadius: '8px', border: '1px solid #3f3f46', background: '#27272a', color: '#fff' }}
                                 />
                                 <input
                                     type="text" placeholder="챕터 제목을 입력하세요 (예: 백엔드 기초)"
-                                    value={newRegularTitle} onChange={e => setNewRegularTitle(e.target.value)}
+                                    value={newChapterTitle} onChange={e => setNewChapterTitle(e.target.value)}
                                     style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #3f3f46', background: '#27272a', color: '#fff' }}
                                 />
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                                <button onClick={() => setIsCreatingRegular(false)} style={{ padding: '8px 16px', borderRadius: '8px', background: 'transparent', color: '#a1a1aa', border: 'none', cursor: 'pointer' }}>취소</button>
-                                <button onClick={handleCreateRegular} style={{ padding: '8px 16px', borderRadius: '8px', background: '#fbbf24', color: '#000', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>챕터 생성</button>
+                                <button onClick={() => setIsCreatingChapter(false)} style={{ padding: '8px 16px', borderRadius: '8px', background: 'transparent', color: '#a1a1aa', border: 'none', cursor: 'pointer' }}>취소</button>
+                                <button onClick={handleCreateChapter} style={{ padding: '8px 16px', borderRadius: '8px', background: '#fbbf24', color: '#000', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>챕터 생성</button>
                             </div>
                         </div>
                     )}
                 </div>
             )}
 
-            {/* --- PERSONAL TAB (DISCORD FORUM STYLE) --- */}
+            {/* --- PERSONAL TAB --- */}
             {activeTab === 'PERSONAL' && (
                 <div style={{ animation: 'fadeIn 0.3s ease' }}>
-
+                    {/* Reuse existing Personal Tab UI logic (omitted complex rework for brevity as focus was curriculum) */}
                     {!isCreatingPersonal ? (
                         <>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -601,8 +965,6 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
                                     <FiPlus /> 목표 생성
                                 </button>
                             </div>
-
-                            {/* Forum Grid */}
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
                                 {personalList.map((post) => (
                                     <div
@@ -635,7 +997,81 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
                                                     </span>
                                                 ))}
                                             </div>
-                                            <FiMoreHorizontal color="#71717a" />
+                                            <div style={{ position: 'relative' }}>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setOpenPersonalItemMenu(openPersonalItemMenu === post.id ? null : post.id);
+                                                    }}
+                                                    style={{
+                                                        background: 'transparent',
+                                                        border: 'none',
+                                                        color: openPersonalItemMenu === post.id ? '#e4e4e7' : '#71717a',
+                                                        cursor: 'pointer', display: 'flex', alignItems: 'center',
+                                                        padding: '4px', borderRadius: '4px'
+                                                    }}
+                                                >
+                                                    <FiMoreHorizontal />
+                                                </button>
+                                                {openPersonalItemMenu === post.id && (
+                                                    <div style={{
+                                                        position: 'absolute', top: '100%', right: '0',
+                                                        marginTop: '4px',
+                                                        backgroundColor: '#18181b',
+                                                        border: '1px solid #3f3f46',
+                                                        borderRadius: '8px',
+                                                        padding: '4px',
+                                                        zIndex: 20,
+                                                        minWidth: '100px',
+                                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
+                                                    }}>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setEditingPersonalPost({
+                                                                    id: post.id,
+                                                                    title: post.title,
+                                                                    content: post.content,
+                                                                    difficulty: post.difficulty,
+                                                                    tags: post.tags
+                                                                });
+                                                                setOpenPersonalItemMenu(null);
+                                                            }}
+                                                            style={{
+                                                                width: '100%', padding: '6px 10px',
+                                                                background: 'transparent', border: 'none',
+                                                                color: '#fbbf24', fontSize: '0.8rem',
+                                                                textAlign: 'left', cursor: 'pointer',
+                                                                display: 'flex', alignItems: 'center', gap: '6px',
+                                                                borderRadius: '4px'
+                                                            }}
+                                                            onMouseOver={e => e.currentTarget.style.background = '#27272a'}
+                                                            onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                        >
+                                                            <FiEdit2 size={12} /> 수정
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDeletePersonal(post.id);
+                                                                setOpenPersonalItemMenu(null);
+                                                            }}
+                                                            style={{
+                                                                width: '100%', padding: '6px 10px',
+                                                                background: 'transparent', border: 'none',
+                                                                color: '#ef4444', fontSize: '0.8rem',
+                                                                textAlign: 'left', cursor: 'pointer',
+                                                                display: 'flex', alignItems: 'center', gap: '6px',
+                                                                borderRadius: '4px'
+                                                            }}
+                                                            onMouseOver={e => e.currentTarget.style.background = '#27272a'}
+                                                            onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                        >
+                                                            <FiTrash2 size={12} /> 삭제
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
 
                                         <h3 style={{ margin: 0, color: '#e4e4e7', fontSize: '1.1rem', lineHeight: 1.4 }}>{post.title}</h3>
@@ -655,9 +1091,7 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
                     ) : (
                         <div style={{ padding: '1.5rem', backgroundColor: '#18181b', borderRadius: '12px', border: '1px solid #3f3f46', marginBottom: '2rem' }}>
                             <h3 style={{ margin: '0 0 1rem 0', color: '#e4e4e7', fontSize: '1.1rem' }}>새로운 목표 생성</h3>
-
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                {/* Title */}
                                 <div>
                                     <label style={{ display: 'block', color: '#a1a1aa', fontSize: '0.8rem', marginBottom: '4px' }}>목표 제목</label>
                                     <input
@@ -666,8 +1100,6 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
                                         style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #3f3f46', background: '#27272a', color: '#fff', outline: 'none' }}
                                     />
                                 </div>
-
-                                {/* Content */}
                                 <div>
                                     <label style={{ display: 'block', color: '#a1a1aa', fontSize: '0.8rem', marginBottom: '4px' }}>상세 내용</label>
                                     <textarea
@@ -723,7 +1155,6 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
                                     </div>
                                 </div>
                             </div>
-
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #27272a' }}>
                                 <button onClick={() => setIsCreatingPersonal(false)} style={{ padding: '10px 18px', borderRadius: '8px', background: 'transparent', color: '#a1a1aa', border: 'none', cursor: 'pointer' }}>취소</button>
                                 <button onClick={handleCreatePersonal} style={{ padding: '10px 18px', borderRadius: '8px', background: '#3b82f6', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>게시하기</button>
@@ -733,173 +1164,603 @@ export default function CurriculumSection({ tasks, onAddTask }: { tasks: any[], 
                 </div>
             )}
 
-            {/* --- DETAIL MODAL -- */}
-            {selectedPost && (
+            {/* --- DETAIL MODAL (Curriculum Content) --- */}
+            {selectedContent && (
                 <div style={{
                     position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
                     backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
                     zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }} onClick={() => setSelectedPost(null)}>
+                }} onClick={() => setSelectedContent(null)}>
                     <div
                         onClick={e => e.stopPropagation()}
                         style={{
-                            width: '800px', maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto',
-                            backgroundColor: '#18181b', borderRadius: '16px', border: '1px solid #3f3f46',
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column'
+                            width: '90%', maxWidth: '600px', backgroundColor: '#18181b',
+                            borderRadius: '16px', border: '1px solid #3f3f46',
+                            padding: '24px', position: 'relative',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
                         }}
                     >
-                        {/* Header */}
-                        <div style={{ padding: '1.5rem', borderBottom: '1px solid #27272a', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <div>
-                                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                                    <span style={{
-                                        padding: '4px 8px', borderRadius: '4px',
-                                        backgroundColor: `${getDifficultyColor(selectedPost.difficulty)}20`,
-                                        color: getDifficultyColor(selectedPost.difficulty),
-                                        fontSize: '0.75rem', fontWeight: 700
-                                    }}>
-                                        {selectedPost.difficulty}
-                                    </span>
-                                    {selectedPost.tags?.map((tag, i) => (
-                                        <span key={i} style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: '#27272a', color: '#a1a1aa', fontSize: '0.75rem' }}>
-                                            #{tag}
+                        <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            {/* Content Menu */}
+                            {(selectedContent as any).chapterId && (
+                                <div style={{ position: 'relative' }}>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setOpenContentMenu(!openContentMenu);
+                                        }}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            color: openContentMenu ? '#e4e4e7' : '#71717a',
+                                            cursor: 'pointer', display: 'flex', alignItems: 'center',
+                                            padding: '4px', borderRadius: '4px', transition: 'color 0.2s',
+                                        }}
+                                        onMouseOver={e => e.currentTarget.style.color = '#e4e4e7'}
+                                        onMouseOut={e => e.currentTarget.style.color = openContentMenu ? '#e4e4e7' : '#71717a'}
+                                        title="설정"
+                                    >
+                                        <FiMoreHorizontal size={22} />
+                                    </button>
+
+                                    {/* Dropdown Menu */}
+                                    {openContentMenu && (
+                                        <div style={{
+                                            position: 'absolute', top: '100%', right: '0',
+                                            marginTop: '8px',
+                                            backgroundColor: '#18181b',
+                                            border: '1px solid #3f3f46',
+                                            borderRadius: '8px',
+                                            padding: '4px',
+                                            zIndex: 10,
+                                            minWidth: '120px',
+                                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
+                                        }}>
+                                            <button
+                                                onClick={() => {
+                                                    setEditingContent({
+                                                        id: selectedContent.id,
+                                                        title: selectedContent.title,
+                                                        desc: selectedContent.description || '',
+                                                        difficulty: selectedContent.difficulty as Difficulty
+                                                    });
+                                                    setOpenContentMenu(false);
+                                                }}
+                                                style={{
+                                                    width: '100%', padding: '8px 12px',
+                                                    background: 'transparent', border: 'none',
+                                                    color: '#fbbf24', fontSize: '0.85rem',
+                                                    textAlign: 'left', cursor: 'pointer',
+                                                    display: 'flex', alignItems: 'center', gap: '8px',
+                                                    borderRadius: '4px'
+                                                }}
+                                                onMouseOver={e => e.currentTarget.style.background = '#27272a'}
+                                                onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                            >
+                                                <FiEdit2 size={14} /> 수정하기
+                                            </button>
+                                            <button
+                                                onClick={async () => {
+                                                    await handleDeleteContent((selectedContent as any).chapterId, selectedContent.id);
+                                                    setSelectedContent(null);
+                                                    setOpenContentMenu(false);
+                                                }}
+                                                style={{
+                                                    width: '100%', padding: '8px 12px',
+                                                    background: 'transparent', border: 'none',
+                                                    color: '#ef4444', fontSize: '0.85rem',
+                                                    textAlign: 'left', cursor: 'pointer',
+                                                    display: 'flex', alignItems: 'center', gap: '8px',
+                                                    borderRadius: '4px'
+                                                }}
+                                                onMouseOver={e => e.currentTarget.style.background = '#27272a'}
+                                                onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                            >
+                                                <FiTrash2 size={14} /> 삭제하기
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            <button
+                                onClick={() => setSelectedContent(null)}
+                                style={{ background: 'transparent', border: 'none', color: '#71717a', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                            >
+                                <FiX size={24} />
+                            </button>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+                            <span style={{
+                                padding: '4px 10px', borderRadius: '6px',
+                                backgroundColor: `${getDifficultyColor(selectedContent.difficulty)}20`,
+                                color: getDifficultyColor(selectedContent.difficulty),
+                                fontSize: '0.8rem', fontWeight: 700
+                            }}>
+                                {selectedContent.difficulty}
+                            </span>
+                        </div>
+
+                        <h2 style={{ fontSize: '1.5rem', color: '#f4f4f5', marginBottom: '16px', lineHeight: 1.3 }}>
+                            {selectedContent.title}
+                        </h2>
+
+                        <div style={{
+                            backgroundColor: '#27272a', borderRadius: '8px', padding: '16px',
+                            color: '#d4d4d8', fontSize: '1rem', lineHeight: 1.6,
+                            minHeight: '120px', whiteSpace: 'pre-wrap', marginBottom: '24px'
+                        }}>
+                            {selectedContent.description || "상세 설명이 없습니다."}
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                            <button
+                                onClick={() => setSelectedContent(null)}
+                                style={{
+                                    padding: '12px 20px', borderRadius: '8px',
+                                    backgroundColor: '#27272a', color: '#e4e4e7',
+                                    border: 'none', cursor: 'pointer', fontWeight: 600
+                                }}
+                            >
+                                닫기
+                            </button>
+                            {/* Complete Button */}
+                            {(selectedContent as any).chapterId && (
+                                <button
+                                    onClick={() => {
+                                        handleToggleComplete((selectedContent as any).chapterId, selectedContent.id);
+                                        // Update local state of selectedContent to reflect change visually if we keep modal open
+                                        setSelectedContent(prev => prev ? { ...prev, isDone: !prev.isDone } : null);
+                                    }}
+                                    style={{
+                                        padding: '12px 24px', borderRadius: '8px',
+                                        backgroundColor: selectedContent.isDone ? '#3f3f46' : '#fbbf24',
+                                        color: selectedContent.isDone ? '#a1a1aa' : '#000',
+                                        border: 'none', cursor: 'pointer', fontWeight: 'bold',
+                                        display: 'flex', alignItems: 'center', gap: '8px'
+                                    }}
+                                >
+                                    {selectedContent.isDone ? (
+                                        <>
+                                            <FiRotateCcw /> 완료 취소
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FiCheckCircle /> 학습 완료
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- DETAIL MODAL (Personal Post) --- */}
+            {
+                selectedPost && (
+                    <div style={{
+                        position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+                        backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+                        zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }} onClick={() => setSelectedPost(null)}>
+                        <div
+                            onClick={e => e.stopPropagation()}
+                            style={{
+                                width: '800px', maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto',
+                                backgroundColor: '#18181b', borderRadius: '16px', border: '1px solid #3f3f46',
+                                boxShadow: '0 20px 40px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column'
+                            }}
+                        >
+                            {/* Header */}
+                            <div style={{ padding: '1.5rem', borderBottom: '1px solid #27272a', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div>
+                                    <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                                        <span style={{
+                                            padding: '4px 8px', borderRadius: '4px',
+                                            backgroundColor: `${getDifficultyColor(selectedPost.difficulty)}20`,
+                                            color: getDifficultyColor(selectedPost.difficulty),
+                                            fontSize: '0.75rem', fontWeight: 700
+                                        }}>
+                                            {selectedPost.difficulty}
                                         </span>
-                                    ))}
-                                </div>
-                                <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#fff' }}>{selectedPost.title}</h2>
-                                <div style={{ color: '#71717a', fontSize: '0.9rem', marginTop: '6px' }}>
-                                    Created on {selectedPost.createdAt}
-                                </div>
-                            </div>
-                            <button onClick={() => setSelectedPost(null)} style={{ background: 'none', border: 'none', color: '#71717a', fontSize: '1.5rem', cursor: 'pointer' }}>
-                                &times;
-                            </button>
-                        </div>
-
-                        {/* Body */}
-                        <div style={{ padding: '1.5rem', flex: 1 }}>
-                            <div style={{
-                                minHeight: '100px', color: '#d1d5db', lineHeight: 1.6, fontSize: '1rem',
-                                whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', marginBottom: '2rem'
-                            }}>
-                                {selectedPost.content || "상세 내용이 없습니다."}
-                            </div>
-
-                            {/* Status and Action */}
-                            <div style={{ padding: '1rem', backgroundColor: '#27272a', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <span style={{ color: '#a1a1aa', fontSize: '0.9rem' }}>현재 상태:</span>
-                                    <div style={{
-                                        display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold',
-                                        color: selectedPost.isDone ? '#10b981' : '#fbbf24'
-                                    }}>
-                                        {selectedPost.isDone ? <FiCheckCircle size={18} /> : <FiClock size={18} />}
-                                        {selectedPost.isDone ? '완료됨 (Done)' : '진행중 (In Progress)'}
+                                        {selectedPost.tags?.map((tag, i) => (
+                                            <span key={i} style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: '#27272a', color: '#a1a1aa', fontSize: '0.75rem' }}>
+                                                #{tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#fff' }}>{selectedPost.title}</h2>
+                                    <div style={{ color: '#71717a', fontSize: '0.9rem', marginTop: '6px' }}>
+                                        Created on {selectedPost.createdAt}
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => {
-                                        // Toggle status logic
-                                        const newUserList = personalList.map(p => p.id === selectedPost.id ? { ...p, isDone: !p.isDone } : p);
-                                        setPersonalList(newUserList);
-                                        setSelectedPost({ ...selectedPost, isDone: !selectedPost.isDone });
-                                    }}
-                                    style={{
-                                        padding: '8px 16px', borderRadius: '6px', border: 'none',
-                                        backgroundColor: selectedPost.isDone ? '#3f3f46' : '#10b981',
-                                        color: '#fff', cursor: 'pointer', fontWeight: 600
-                                    }}
-                                >
-                                    {selectedPost.isDone ? '다시 진행하기' : '완료 처리하기'}
-                                </button>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    {/* Personal Menu */}
+                                    <div style={{ position: 'relative' }}>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setOpenPersonalMenu(!openPersonalMenu);
+                                            }}
+                                            style={{
+                                                background: 'transparent',
+                                                border: 'none',
+                                                color: openPersonalMenu ? '#e4e4e7' : '#71717a',
+                                                cursor: 'pointer', display: 'flex', alignItems: 'center',
+                                                padding: '4px', borderRadius: '4px', transition: 'color 0.2s',
+                                            }}
+                                            onMouseOver={e => e.currentTarget.style.color = '#e4e4e7'}
+                                            onMouseOut={e => e.currentTarget.style.color = openPersonalMenu ? '#e4e4e7' : '#71717a'}
+                                        >
+                                            <FiMoreHorizontal size={22} />
+                                        </button>
+
+                                        {openPersonalMenu && (
+                                            <div style={{
+                                                position: 'absolute', top: '100%', right: '0',
+                                                marginTop: '8px',
+                                                backgroundColor: '#18181b',
+                                                border: '1px solid #3f3f46',
+                                                borderRadius: '8px',
+                                                padding: '4px',
+                                                zIndex: 50,
+                                                minWidth: '120px',
+                                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
+                                            }}>
+                                                <button
+                                                    onClick={() => {
+                                                        setEditingPersonalPost({
+                                                            id: selectedPost.id,
+                                                            title: selectedPost.title,
+                                                            content: selectedPost.content,
+                                                            difficulty: selectedPost.difficulty,
+                                                            tags: selectedPost.tags
+                                                        });
+                                                        setOpenPersonalMenu(false);
+                                                        setSelectedPost(null);
+                                                    }}
+                                                    style={{
+                                                        width: '100%', padding: '8px 12px',
+                                                        background: 'transparent', border: 'none',
+                                                        color: '#fbbf24', fontSize: '0.85rem',
+                                                        textAlign: 'left', cursor: 'pointer',
+                                                        display: 'flex', alignItems: 'center', gap: '8px',
+                                                        borderRadius: '4px'
+                                                    }}
+                                                    onMouseOver={e => e.currentTarget.style.background = '#27272a'}
+                                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                >
+                                                    <FiEdit2 size={14} /> 수정하기
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        handleDeletePersonal(selectedPost.id);
+                                                        setOpenPersonalMenu(false);
+                                                    }}
+                                                    style={{
+                                                        width: '100%', padding: '8px 12px',
+                                                        background: 'transparent', border: 'none',
+                                                        color: '#ef4444', fontSize: '0.85rem',
+                                                        textAlign: 'left', cursor: 'pointer',
+                                                        display: 'flex', alignItems: 'center', gap: '8px',
+                                                        borderRadius: '4px'
+                                                    }}
+                                                    onMouseOver={e => e.currentTarget.style.background = '#27272a'}
+                                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                >
+                                                    <FiTrash2 size={14} /> 삭제하기
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <button onClick={() => setSelectedPost(null)} style={{ background: 'none', border: 'none', color: '#71717a', fontSize: '1.5rem', cursor: 'pointer' }}>
+                                        &times;
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Body */}
+                            <div style={{ padding: '1.5rem', flex: 1 }}>
+                                <div style={{
+                                    minHeight: '100px', color: '#d1d5db', lineHeight: 1.6, fontSize: '1rem',
+                                    whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', marginBottom: '2rem'
+                                }}>
+                                    {selectedPost.content || "상세 내용이 없습니다."}
+                                </div>
+
+                                {/* Status and Action */}
+                                <div style={{ padding: '1rem', backgroundColor: '#27272a', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <span style={{ color: '#a1a1aa', fontSize: '0.9rem' }}>현재 상태:</span>
+                                        <div style={{
+                                            display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold',
+                                            color: selectedPost.isDone ? '#10b981' : '#fbbf24'
+                                        }}>
+                                            {selectedPost.isDone ? <FiCheckCircle size={18} /> : <FiClock size={18} />}
+                                            {selectedPost.isDone ? '완료됨 (Done)' : '진행중 (In Progress)'}
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => handleTogglePersonal(selectedPost)}
+                                        style={{
+                                            padding: '10px 20px',
+                                            backgroundColor: selectedPost.isDone ? '#3f3f46' : '#3b82f6',
+                                            color: selectedPost.isDone ? '#a1a1aa' : '#fff',
+                                            border: 'none', borderRadius: '8px', fontWeight: 'bold',
+                                            cursor: 'pointer',
+                                            display: 'flex', alignItems: 'center', gap: '8px'
+                                        }}
+                                    >
+                                        {selectedPost.isDone ? (
+                                            <>
+                                                <FiRotateCcw /> 완료 취소
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FiCheckCircle /> 목표 달성
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </div>
-
-                        {/* Comment Shell Removed as per request */}
                     </div>
-                </div>
-            )}
-
-            {/* --- REGULAR ITEM DETAIL MODAL --- */}
-            {selectedItem && (
+                )
+            }
+            {/* --- EDIT MODAL (Chapter) --- */}
+            {editingChapter && (
                 <div style={{
                     position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
                     backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
-                    zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }} onClick={() => setSelectedItem(null)}>
-                    <div
-                        onClick={e => e.stopPropagation()}
-                        style={{
-                            width: '600px', maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto',
-                            backgroundColor: '#18181b', borderRadius: '16px', border: '1px solid #3f3f46',
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column'
-                        }}
-                    >
-                        <div style={{ padding: '1.5rem', borderBottom: '1px solid #27272a', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <div>
-                                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                                    <span style={{
-                                        padding: '4px 8px', borderRadius: '4px',
-                                        backgroundColor: '#27272a', color: '#a1a1aa',
-                                        fontSize: '0.75rem', fontWeight: 700
-                                    }}>
-                                        {selectedItem.type}
-                                    </span>
-                                </div>
-                                <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#fff' }}>{selectedItem.title}</h2>
-                            </div>
-                            <button onClick={() => setSelectedItem(null)} style={{ background: 'none', border: 'none', color: '#71717a', fontSize: '1.5rem', cursor: 'pointer' }}>
-                                &times;
-                            </button>
-                        </div>
-
-                        <div style={{ padding: '1.5rem', flex: 1 }}>
-                            <div style={{
-                                minHeight: '100px', color: '#d1d5db', lineHeight: 1.6, fontSize: '1rem',
-                                whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', marginBottom: '2rem'
-                            }}>
-                                {selectedItem.content || "상세 내용이 없습니다."}
-                            </div>
-
-                            <div style={{ padding: '1rem', backgroundColor: '#27272a', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <span style={{ color: '#a1a1aa', fontSize: '0.9rem' }}>학습 상태:</span>
-                                    <div style={{
-                                        display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold',
-                                        color: selectedItem.completed ? '#10b981' : '#fbbf24'
-                                    }}>
-                                        {selectedItem.completed ? <FiCheckCircle size={18} /> : <FiClock size={18} />}
-                                        {selectedItem.completed ? '학습 완료 (Done)' : '학습 중 (In Progress)'}
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        // Need to find which module this item belongs to.
-                                        // Since we don't have parent module ID easily here without props or searching,
-                                        // We'll search for it.
-                                        let foundModuleId = -1;
-                                        regularList.forEach(m => {
-                                            if (m.items.find(i => i.id === selectedItem.id)) foundModuleId = m.id;
-                                        });
-
-                                        if (foundModuleId !== -1) {
-                                            toggleItemCompletion(foundModuleId, selectedItem.id);
-                                            setSelectedItem({ ...selectedItem, completed: !selectedItem.completed });
-                                        }
-                                    }}
-                                    style={{
-                                        padding: '8px 16px', borderRadius: '6px', border: 'none',
-                                        backgroundColor: selectedItem.completed ? '#3f3f46' : '#10b981',
-                                        color: '#fff', cursor: 'pointer', fontWeight: 600
-                                    }}
-                                >
-                                    {selectedItem.completed ? '미완료 상태로 변경' : '학습 완료 체크'}
-                                </button>
-                            </div>
+                    zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }} onClick={() => setEditingChapter(null)}>
+                    <div onClick={e => e.stopPropagation()} style={{
+                        width: '400px', backgroundColor: '#18181b', padding: '24px', borderRadius: '16px', border: '1px solid #3f3f46'
+                    }}>
+                        <h3 style={{ color: '#fff', marginBottom: '16px' }}>챕터 수정</h3>
+                        <input
+                            value={editingChapter.week}
+                            onChange={e => setEditingChapter({ ...editingChapter, week: e.target.value })}
+                            placeholder="Week (예: Week 1)"
+                            style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '8px', background: '#27272a', border: '1px solid #3f3f46', color: '#fff' }}
+                        />
+                        <input
+                            value={editingChapter.title}
+                            onChange={e => setEditingChapter({ ...editingChapter, title: e.target.value })}
+                            placeholder="Chapter Title"
+                            style={{ width: '100%', padding: '10px', marginBottom: '20px', borderRadius: '8px', background: '#27272a', border: '1px solid #3f3f46', color: '#fff' }}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                            <button onClick={() => setEditingChapter(null)} style={{ padding: '8px 16px', borderRadius: '8px', background: '#3f3f46', color: '#fff', border: 'none', cursor: 'pointer' }}>취소</button>
+                            <button onClick={handleUpdateChapter} style={{ padding: '8px 16px', borderRadius: '8px', background: '#3b82f6', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>수정 완료</button>
                         </div>
                     </div>
                 </div>
             )}
-        </section>
+
+            {/* --- EDIT MODAL (Content) --- */}
+            {editingContent && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+                    backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+                    zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }} onClick={() => setEditingContent(null)}>
+                    <div onClick={e => e.stopPropagation()} style={{
+                        width: '500px', backgroundColor: '#18181b', padding: '24px', borderRadius: '16px', border: '1px solid #3f3f46'
+                    }}>
+                        <h3 style={{ color: '#fff', marginBottom: '16px' }}>컨텐츠 수정</h3>
+                        <input
+                            value={editingContent.title}
+                            onChange={e => setEditingContent({ ...editingContent, title: e.target.value })}
+                            placeholder="Content Title"
+                            style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '8px', background: '#27272a', border: '1px solid #3f3f46', color: '#fff' }}
+                        />
+                        <textarea
+                            value={editingContent.desc}
+                            onChange={e => setEditingContent({ ...editingContent, desc: e.target.value })}
+                            placeholder="Description"
+                            rows={4}
+                            style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '8px', background: '#27272a', border: '1px solid #3f3f46', color: '#fff', resize: 'vertical' }}
+                        />
+                        <select
+                            value={editingContent.difficulty}
+                            onChange={e => setEditingContent({ ...editingContent, difficulty: e.target.value as Difficulty })}
+                            style={{ width: '100%', padding: '10px', marginBottom: '20px', borderRadius: '8px', background: '#27272a', border: '1px solid #3f3f46', color: '#fff' }}
+                        >
+                            <option value="EASY">EASY (10~150 XP)</option>
+                            <option value="NORMAL">NORMAL (150~450 XP)</option>
+                            <option value="HARD">HARD (450~1000 XP)</option>
+                        </select>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                            <button onClick={() => setEditingContent(null)} style={{ padding: '8px 16px', borderRadius: '8px', background: '#3f3f46', color: '#fff', border: 'none', cursor: 'pointer' }}>취소</button>
+                            <button onClick={handleUpdateContent} style={{ padding: '8px 16px', borderRadius: '8px', background: '#3b82f6', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>수정 완료</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- EDIT MODAL (Personal Post) --- */}
+            {editingPersonalPost && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+                    backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+                    zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }} onClick={() => setEditingPersonalPost(null)}>
+                    <div onClick={e => e.stopPropagation()} style={{
+                        width: '600px', maxWidth: '90vw', backgroundColor: '#18181b', padding: '24px', borderRadius: '16px', border: '1px solid #3f3f46',
+                        maxHeight: '90vh', overflowY: 'auto'
+                    }}>
+                        <h3 style={{ color: '#fff', marginBottom: '20px', fontSize: '1.2rem' }}>목표 수정하기</h3>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <div>
+                                <label style={{ display: 'block', color: '#a1a1aa', fontSize: '0.8rem', marginBottom: '4px' }}>제목</label>
+                                <input
+                                    value={editingPersonalPost.title}
+                                    onChange={e => setEditingPersonalPost({ ...editingPersonalPost, title: e.target.value })}
+                                    style={{ width: '100%', padding: '12px', borderRadius: '8px', background: '#27272a', border: '1px solid #3f3f46', color: '#fff' }}
+                                />
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', color: '#a1a1aa', fontSize: '0.8rem', marginBottom: '4px' }}>내용</label>
+                                <textarea
+                                    value={editingPersonalPost.content}
+                                    onChange={e => setEditingPersonalPost({ ...editingPersonalPost, content: e.target.value })}
+                                    rows={5}
+                                    style={{ width: '100%', padding: '12px', borderRadius: '8px', background: '#27272a', border: '1px solid #3f3f46', color: '#fff', resize: 'vertical' }}
+                                />
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '20px' }}>
+                                <div style={{ flex: 1 }}>
+                                    <label style={{ display: 'block', color: '#a1a1aa', fontSize: '0.8rem', marginBottom: '4px' }}>난이도</label>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        {(['EASY', 'NORMAL', 'HARD'] as Difficulty[]).map(diff => (
+                                            <button
+                                                key={diff}
+                                                onClick={() => setEditingPersonalPost({ ...editingPersonalPost, difficulty: diff })}
+                                                style={{
+                                                    flex: 1, padding: '8px', borderRadius: '6px',
+                                                    border: editingPersonalPost.difficulty === diff ? `1px solid ${getDifficultyColor(diff)}` : '1px solid #3f3f46',
+                                                    background: editingPersonalPost.difficulty === diff ? `${getDifficultyColor(diff)}20` : 'transparent',
+                                                    color: editingPersonalPost.difficulty === diff ? getDifficultyColor(diff) : '#71717a',
+                                                    cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600
+                                                }}
+                                            >
+                                                {diff}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #27272a' }}>
+                            <button onClick={() => setEditingPersonalPost(null)} style={{ padding: '10px 18px', borderRadius: '8px', background: '#3f3f46', color: '#fff', border: 'none', cursor: 'pointer' }}>취소</button>
+                            <button
+                                onClick={() => {
+                                    handleUpdatePersonal(editingPersonalPost.id, {
+                                        title: editingPersonalPost.title,
+                                        content: editingPersonalPost.content,
+                                        difficulty: editingPersonalPost.difficulty,
+                                        tags: editingPersonalPost.tags
+                                    });
+                                    setEditingPersonalPost(null);
+                                }}
+                                style={{ padding: '10px 18px', borderRadius: '8px', background: '#3b82f6', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
+                                수정 완료
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- DELETE CONFIRMATION MODAL --- */}
+            {deletingPersonalPost && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+                    backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)',
+                    zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }} onClick={() => setDeletingPersonalPost(null)}>
+                    <div onClick={e => e.stopPropagation()} style={{
+                        width: '400px', backgroundColor: '#18181b', padding: '24px', borderRadius: '16px', border: '1px solid #3f3f46',
+                        textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                    }}>
+                        <div style={{
+                            width: '60px', height: '60px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                            color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            margin: '0 auto 16px auto'
+                        }}>
+                            <FiTrash2 size={32} />
+                        </div>
+                        <h3 style={{ color: '#fff', marginBottom: '8px', fontSize: '1.2rem' }}>정말 삭제하시겠습니까?</h3>
+                        <p style={{ color: '#a1a1aa', marginBottom: '24px', lineHeight: 1.5, fontSize: '0.95rem' }}>
+                            삭제된 데이터는 복구할 수 없습니다.<br />
+                            신중하게 결정해 주세요.
+                        </p>
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={() => setDeletingPersonalPost(null)}
+                                style={{
+                                    flex: 1, padding: '12px', borderRadius: '8px',
+                                    background: '#27272a', color: '#fff', border: '1px solid #3f3f46',
+                                    cursor: 'pointer', fontWeight: 600
+                                }}
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={confirmDeletePersonal}
+                                style={{
+                                    flex: 1, padding: '12px', borderRadius: '8px',
+                                    background: '#ef4444', color: '#fff', border: 'none',
+                                    cursor: 'pointer', fontWeight: 600,
+                                    boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.3)'
+                                }}
+                            >
+                                삭제하기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
+            {/* --- DELETE CONFIRMATION MODAL (Content) --- */}
+            {deletingContentId && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+                    backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)',
+                    zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }} onClick={() => setDeletingContentId(null)}>
+                    <div onClick={e => e.stopPropagation()} style={{
+                        width: '400px', backgroundColor: '#18181b', padding: '24px', borderRadius: '16px', border: '1px solid #3f3f46',
+                        textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                    }}>
+                        <div style={{
+                            width: '60px', height: '60px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                            color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            margin: '0 auto 16px auto'
+                        }}>
+                            <FiTrash2 size={32} />
+                        </div>
+                        <h3 style={{ color: '#fff', marginBottom: '8px', fontSize: '1.2rem' }}>컨텐츠를 삭제하시겠습니까?</h3>
+                        <p style={{ color: '#a1a1aa', marginBottom: '24px', lineHeight: 1.5, fontSize: '0.95rem' }}>
+                            삭제된 데이터는 복구할 수 없습니다.<br />
+                            신중하게 결정해 주세요.
+                        </p>
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={() => setDeletingContentId(null)}
+                                style={{
+                                    flex: 1, padding: '12px', borderRadius: '8px',
+                                    background: '#27272a', color: '#fff', border: '1px solid #3f3f46',
+                                    cursor: 'pointer', fontWeight: 600
+                                }}
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={confirmDeleteContent}
+                                style={{
+                                    flex: 1, padding: '12px', borderRadius: '8px',
+                                    background: '#ef4444', color: '#fff', border: 'none',
+                                    cursor: 'pointer', fontWeight: 600,
+                                    boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.3)'
+                                }}
+                            >
+                                삭제하기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </section >
     );
 }

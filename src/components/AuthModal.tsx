@@ -25,6 +25,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         <AnimatePresence>
             {isOpen && (
                 <motion.div
+                    key="modal-overlay"
                     className={styles.overlay}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -32,11 +33,12 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     onClick={onClose} // Close on backdrop click
                 >
                     <motion.div
+                        key="modal-content"
                         className={styles.modal}
                         initial={{ scale: 0.95, opacity: 0, y: 20 }}
                         animate={{ scale: 1, opacity: 1, y: 0 }}
-                        exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                        transition={{ type: "spring", duration: 0.5 }}
+                        exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
                         onClick={(e: React.MouseEvent) => e.stopPropagation()} // Prevent closing when clicking modal
                     >
                         {/* Close Button */}
@@ -46,6 +48,11 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
                         {/* Header */}
                         <div className={styles.header}>
+                            {/* Logo in Modal */}
+                            <div style={{ fontFamily: 'var(--font-grenze)', fontSize: '2rem', marginBottom: '1rem', textAlign: 'center' }}>
+                                Lähtökohta
+                            </div>
+
                             {isSuccess ? (
                                 <>
                                     <h2 className={styles.title} style={{ color: '#10b981' }}>Success!</h2>
