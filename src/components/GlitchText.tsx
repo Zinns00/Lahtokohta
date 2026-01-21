@@ -11,11 +11,11 @@ interface GlitchTextProps {
 const GlitchText: React.FC<GlitchTextProps> = ({ text, className = "" }) => {
     return (
         <div className={`${styles.container} ${className}`}>
-            <span style={{ position: 'relative', zIndex: 10 }}>{text}</span>
-            <span className={`${styles.layer} ${styles.red}`}>
+            <span className="relative z-10">{text}</span>
+            <span className={`${styles.layer} ${styles.red}`} aria-hidden="true">
                 {text}
             </span>
-            <span className={`${styles.layer} ${styles.blue}`}>
+            <span className={`${styles.layer} ${styles.blue}`} aria-hidden="true">
                 {text}
             </span>
         </div>

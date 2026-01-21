@@ -10,7 +10,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: fadeIn 0.3s ease-out forwards;
 }
 
 .modal {
@@ -24,9 +23,8 @@
     border: 1px solid #f4f4f5;
     box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.1);
     padding: 2.5rem;
-    transform: scale(0.95);
-    opacity: 0;
-    animation: scaleIn 0.3s ease-out forwards;
+    transform: scale(1);
+    opacity: 1;
 }
 
 .closeButton {
@@ -217,26 +215,4 @@
 .successText {
     font-size: 1rem;
     color: #666;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes scaleIn {
-    from {
-        opacity: 0;
-        transform: scale(0.96);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
 }
