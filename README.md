@@ -59,8 +59,10 @@
 # 1. 의존성 설치
 npm install
 
-# 2. 데이터베이스 스키마 동기화 (Schema -> DB)
+# 2. 데이터베이스 스키마 동기화 및 접속 (Schema -> DB)
 npx prisma migrate dev
+npx prisma studio
+npx prisma generate 
 
 # 3. 개발 서버 실행
 npm run dev
@@ -69,7 +71,8 @@ npm run dev
 
 브라우저에서 [http://localhost:3000](http://localhost:3000)으로 접속하세요.
 
-db는 [http://localhost:5555](http://localhost:5555)으로 접속하게요.
+db는 [http://localhost:5555](http://localhost:5555)으로 접속하세요.
+
 ---
 
 ## 🧹 Maintenance Notes
