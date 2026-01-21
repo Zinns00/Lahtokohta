@@ -51,40 +51,9 @@
 
 ---
 
-## 📂 Project Structure (폴더 구조)
-
-```bash
-├── prisma/               # Database Schema & Migrations
-│   ├── schema.prisma     # DB 모델 정의
-│   └── migrations/       # SQL 마이그레이션 히스토리
-├── src/
-│   ├── app/              # Next.js App Router Pages & API Routes
-│   │   ├── api/          # Backend Endpoints (login, signup, me, workspaces)
-│   │   ├── dashboard/    # Main User Interface
-│   │   └── page.tsx      # Landing Page
-│   ├── components/       # Reusable UI Components
-│   │   ├── AuthModal.tsx # Login/Signup Modal
-│   │   └── CreateWorkspaceModal.tsx
-│   └── lib/              # Utilities
-│       ├── prisma.ts     # Prisma Client Singleton
-│       └── utils.ts      # Helper Functions
-├── public/               # Static Assets
-└── README.md             # Project Documentation
-```
-
----
-
 ## 🚀 Getting Started (실행 방법)
 
-### 1. 환경 변수 설정 (.env)
-루트 디렉토리에 `.env` 파일을 생성하고 다음 정보를 입력하세요.
-
-```env
-DATABASE_URL="postgresql://user:password@localhost:5432/lahtokohta?schema=public"
-JWT_SECRET="your-secure-secret-key"
-```
-
-### 2. 설치 및 실행
+### 1. 설치 및 실행
 
 ```bash
 # 1. 의존성 설치
@@ -95,10 +64,12 @@ npx prisma migrate dev
 
 # 3. 개발 서버 실행
 npm run dev
+
 ```
 
 브라우저에서 [http://localhost:3000](http://localhost:3000)으로 접속하세요.
 
+db는 [http://localhost:5555](http://localhost:5555)으로 접속하게요.
 ---
 
 ## 🧹 Maintenance Notes
