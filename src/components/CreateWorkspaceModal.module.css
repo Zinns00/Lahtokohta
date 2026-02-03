@@ -117,7 +117,7 @@
     flex: 1;
     /* Custom Scrollbar for sleek look */
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+    scrollbar-color: rgba(204, 202, 202, 0.486) transparent;
 }
 
 .content::-webkit-scrollbar {
@@ -129,12 +129,12 @@
 }
 
 .content::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(204, 202, 202, 0.486);
     border-radius: 20px;
 }
 
 .content::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(204, 202, 202, 0.7);
 }
 
 .stepContent {
