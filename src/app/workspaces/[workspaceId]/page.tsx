@@ -14,6 +14,7 @@ import { FaFire, FaBolt } from "react-icons/fa";
 // Separate components import
 import CurriculumSection from './components/CurriculumSection';
 import AttendanceSection from './components/AttendanceSection';
+import { WORKSPACE_CATEGORIES, WORKSPACE_DEFAULTS } from '@/constants/workspace';
 import { getUserLevelInfo } from '@/lib/levelSystem';
 
 type Tab = 'CURRICULUM' | 'ATTENDANCE';
@@ -53,7 +54,7 @@ export default function WorkspaceDetailPage() {
             id: Date.now(),
             content,
             isDone: false,
-            xpReward: 10,
+            xpReward: WORKSPACE_DEFAULTS.DEFAULT_TASK_XP_REWARD,
             type,
             priority
         };
@@ -66,11 +67,16 @@ export default function WorkspaceDetailPage() {
 
     // Helper: Dynamic Icon based on Category
     const getCategoryIcon = (category: string) => {
-        const cat = category?.toLowerCase() || '';
-        if (cat.includes('study') || cat.includes('학습')) return <FiBookOpen />;
-        if (cat.includes('project') || cat.includes('프로젝트')) return <FiBriefcase />;
-        if (cat.includes('health') || cat.includes('운동')) return <FiActivity />;
-        return <FiLayers />;
+        const found = WORKSPACE_CATEGORIES.find(c => c.val === category || c.label === category);
+        const catVal = found ? found.val : 'Study';
+
+        switch (catVal) {
+            case 'Study': return <FiBookOpen />;
+            case 'Project': return <FiBriefcase />;
+            case 'Health': return <FiActivity />;
+            case 'Hobby': return <FiLayers />; // Defaulting Hobby to layers if no better icon
+            default: return <FiLayers />;
+        }
     };
 
     if (isLoading) return <div className={styles.loading}>Accessing Workspace...</div>;
@@ -91,7 +97,7 @@ export default function WorkspaceDetailPage() {
                     </div>
 
                     <div className={styles.workspaceTitle}>
-                        <h1>{workspace.title}</h1>
+                        <h1 style={{ fontFamily: 'var(--font-mono)', fontWeight: 'bold', letterSpacing: '-0.02em' }}>{workspace.title}</h1>
                         <div className={styles.metaRow}>
                             <span className={styles.metaBadge}>{workspace.category}</span>
                             <span className={`${styles.metaBadge} ${styles.difficultyBadge}`}>
@@ -225,7 +231,6 @@ export default function WorkspaceDetailPage() {
                                     attendances={workspace.attendances || []}
                                     minStudyHours={workspace.minStudyHours}
                                     onCheckInComplete={(newTotalXP) => {
-                                        console.log('WorkspacePage received newTotalXP:', newTotalXP);
                                         setWorkspace((prev: any) => ({
                                             ...prev,
                                             user: {
