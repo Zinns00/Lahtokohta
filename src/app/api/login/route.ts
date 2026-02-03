@@ -7,19 +7,15 @@ import { z } from 'zod';
 import { JWT_SECRET_KEY } from '@/lib/auth-constants';
 
 export async function POST(req: Request) {
-    console.log('[API] Login Request Received');
     try {
         const body = await req.json();
-        console.log('[API] Login Body:', body);
 
         const { username, password } = loginSchema.parse(body);
 
         // 1. Find user (Prisma)
-        console.log('[API] Querying Prisma for user:', username);
         const user = await prisma.user.findUnique({
             where: { username }
         });
-        console.log('[API] Prisma Result:', user ? 'User Found' : 'User Not Found');
 
         if (!user) {
             return NextResponse.json(
@@ -30,7 +26,6 @@ export async function POST(req: Request) {
 
         // 2. Check password
         const passwordMatch = await bcrypt.compare(password, user.password);
-        console.log('[API] Password Match:', passwordMatch);
 
         if (!passwordMatch) {
             return NextResponse.json(
@@ -46,7 +41,7 @@ export async function POST(req: Request) {
             .sign(JWT_SECRET_KEY);
 
         // 4. Set Cookie
-        console.log('[API] Login Successful, generating response');
+        // 4. Set Cookie
         const response = NextResponse.json(
             { message: '로그인 성공', user: { id: user.id, username: user.username } },
             { status: 200 }
@@ -62,8 +57,6 @@ export async function POST(req: Request) {
 
         return response;
     } catch (error) {
-        console.error('[API] Login CRITICAL Error:', error);
-
         if (error instanceof z.ZodError) {
             return NextResponse.json(
                 { message: '입력 값이 올바르지 않습니다.', errors: error },

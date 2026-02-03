@@ -73,9 +73,9 @@ export default function Home() {
             transition={{ staggerChildren: 0.2 }}
           >
             {[
-              { title: 'MILESTONE_01', desc: 'Objective Setting Protocol', img: 'https://i.pinimg.com/736x/4d/46/01/4d4601c0a82f4f5541c3d33578b73be7.jpg' },
-              { title: 'MILESTONE_02', desc: 'Deep Focus Chamber', img: 'https://i.pinimg.com/736x/c6/ef/ab/c6efab4249a3461f9fb1a3f483bd7b17.jpg' },
-              { title: 'MILESTONE_03', desc: 'Creative Output Stream', img: 'https://i.pinimg.com/736x/52/7b/6c/527b6c34e1e1e39efd366108043fa6f6.jpg' }
+              { title: 'MILESTONE_01', desc: 'Objective Setting Protocol', img: 'https://i.pinimg.com/736x/14/12/73/1412738f27d6e26554af9a9ab75a93f9.jpg' },
+              { title: 'MILESTONE_02', desc: 'Deep Focus Chamber', img: 'https://i.pinimg.com/736x/4b/10/ae/4b10ae1b2a49596521d3303cd5f340d2.jpg' },
+              { title: 'MILESTONE_03', desc: 'Creative Output Stream', img: 'https://i.pinimg.com/1200x/3c/c6/57/3cc657139d92dc4d0c5eb3da30a850ba.jpg' }
             ].map((item, i) => (
               <motion.div
                 key={i}

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import styles from './ProfileSettingsModal.module.css';
 import { FiX, FiCamera, FiLock, FiCheck, FiEdit2, FiUser } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getUserLevelInfo, UserTitle } from '@/lib/levelSystem';
+import { getUserLevelInfo, UserTitle, USER_FRAMES } from '@/lib/levelSystem';
 import UserAvatar from './UserAvatar';
 import LogoutModal from './LogoutModal';
 
@@ -23,16 +23,7 @@ interface Props {
     onSuccess: () => void;
 }
 
-const FRAMES = [
-    { id: 'Default', label: '기본', minLevel: 0 },
-    { id: 'Explorer', label: '탐험가', minLevel: 1 },
-    { id: 'Pioneer', label: '개척자', minLevel: 20 },
-    { id: 'Navigator', label: '항해사', minLevel: 40 },
-    { id: 'Conqueror', label: '정복자', minLevel: 60 },
-    { id: 'Master', label: '마스터', minLevel: 80 },
-    { id: 'Transcendent', label: '초월자', minLevel: 90 },
-    { id: 'Absolute', label: '절대자', minLevel: 100 },
-];
+
 
 export default function ProfileSettingsModal({ isOpen, onClose, user, onSuccess }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -242,7 +233,7 @@ export default function ProfileSettingsModal({ isOpen, onClose, user, onSuccess 
                                     달성한 칭호에 따라 특별한 테두리가 해금됩니다.
                                 </p>
                                 <div className={styles.frameGrid}>
-                                    {FRAMES.map((frame) => {
+                                    {USER_FRAMES.map((frame) => {
                                         const isUnlocked = currentLevel >= frame.minLevel || (user as any).role === 'ADMIN';
                                         const isSelected = selectedFrame === frame.id;
 

@@ -6,11 +6,10 @@ import { useParams } from 'next/navigation';
 import styles from '../page.module.css';
 import { FiPlus, FiTrash2, FiMoreVertical, FiCheck } from "react-icons/fi";
 import AttendanceRewardModal from '@/components/AttendanceRewardModal';
+import { getWorkspaceStorageKey } from '@/utils/storage';
+import { formatDateWithDay, formatDate as formatDateDot, cleanDateString } from '@/utils/date';
 
 const INITIAL_COLUMNS = ['년-월-일', '학습시작시간', '학습종료시간', '사유(외출, 조퇴 등)', '상태(자동갱신)'];
-
-// Example Row (Read Only)
-const EXAMPLE_ROW = ['예시: 2025-01-15(수)', '09:00', '18:00', '예시: 병원 진료로 외출', '출석 완료 ✅'];
 
 interface AttendanceSectionProps {
     streak: number;
@@ -39,12 +38,10 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
     }, [rows, columns]);
 
     // --- LocalStorage Helpers ---
-    const getStorageKey = (key: string) => `workspace_${workspaceId}_${key}`;
-
     const getLocalDrafts = () => {
         if (typeof window === 'undefined') return {};
         try {
-            const stored = localStorage.getItem(getStorageKey('drafts'));
+            const stored = localStorage.getItem(getWorkspaceStorageKey(workspaceId, 'drafts'));
             return stored ? JSON.parse(stored) : {};
         } catch (e) { return {}; }
     };
@@ -56,14 +53,14 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
         // Merge with existing draft to preserve other fields if partial update
         const existing = drafts[dateKey] || {};
         drafts[dateKey] = { ...existing, ...data, timestamp: Date.now() };
-        localStorage.setItem(getStorageKey('drafts'), JSON.stringify(drafts));
+        localStorage.setItem(getWorkspaceStorageKey(workspaceId, 'drafts'), JSON.stringify(drafts));
     };
 
     const removeLocalDraft = (dateKey: string) => {
         if (typeof window === 'undefined') return;
         const drafts = getLocalDrafts();
         delete drafts[dateKey];
-        localStorage.setItem(getStorageKey('drafts'), JSON.stringify(drafts));
+        localStorage.setItem(getWorkspaceStorageKey(workspaceId, 'drafts'), JSON.stringify(drafts));
     };
 
     // --- API Persistence for Table Config ---
@@ -97,27 +94,16 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
         for (let i = currentRows.length - 1; i >= 0; i--) {
             const row = currentRows[i];
             if (row[0] && /^\d{4}-\d{2}-\d{2}/.test(row[0])) {
-                const dateStr = row[0].split('(')[0];
+                const dateStr = cleanDateString(row[0]);
                 if (!maxDate || dateStr > maxDate) maxDate = dateStr;
             }
         }
 
-        const extraRows = currentRows.filter((row, i) => i > 0 && !/^\d{4}-\d{2}-\d{2}/.test(row[0]));
-
-        // Capture Custom Examples from Row 0
-        const examples: Record<number, string> = {};
-        if (currentRows.length > 0) {
-            currentRows[0].forEach((cell, idx) => {
-                if (idx >= INITIAL_COLUMNS.length && cell) {
-                    examples[idx] = cell;
-                }
-            });
-        }
+        const extraRows = currentRows.filter((row, i) => !/^\d{4}-\d{2}-\d{2}/.test(row[0]));
 
         const tableConfig = {
             columns: currentCols,
-            maxDate,
-            examples // Save custom examples
+            maxDate
         };
 
         // Call API
@@ -143,15 +129,10 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
     const [activeMenu, setActiveMenu] = useState<{ type: 'row' | 'col', index: number, top: number, left: number } | null>(null);
     const [rowsToAdd, setRowsToAdd] = useState<number | ''>(1);
 
-    // Format Date Helper
-    const formatDate = (date: Date) => {
-        const yyyy = date.getFullYear();
-        const mm = String(date.getMonth() + 1).padStart(2, '0');
-        const dd = String(date.getDate()).padStart(2, '0');
-        const days = ['일', '월', '화', '수', '목', '금', '토'];
-        const dayName = days[date.getDay()];
-        return `${yyyy}-${mm}-${dd}(${dayName})`;
-    };
+    // Format Date Helper removed in favor of util imports (but we need to ensure usage is updated if named differently)
+    // Actually we imported formatDateWithDay and formatDate as formatDateDot.
+    // The previous formatDate function was making YYYY-MM-DD(Day).
+    // Let's rely on the import: formatDateWithDay.
 
     // --- Main Data Fetching ---
     const fetchData = async () => {
@@ -309,7 +290,7 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
                         const mm = String(current.getMonth() + 1).padStart(2, '0');
                         const dd = String(current.getDate()).padStart(2, '0');
                         const dateKey = `${yyyy}-${mm}-${dd}`;
-                        const dateLabel = formatDate(current);
+                        const dateLabel = formatDateWithDay(current);
 
                         newDateRows.push(buildRow(dateKey, dateLabel));
                         current.setDate(current.getDate() + 1);
@@ -322,19 +303,7 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
                         return newR;
                     });
 
-                    // Ensure example row has correct length
-                    const example = new Array(currentCols.length).fill('');
-                    EXAMPLE_ROW.forEach((val, i) => { if (i < example.length) example[i] = val; });
-
-                    // Apply Saved Examples for Custom Columns
-                    Object.keys(savedExamples).forEach(idxStr => {
-                        const idx = parseInt(idxStr);
-                        if (idx < example.length) {
-                            example[idx] = savedExamples[idxStr];
-                        }
-                    });
-
-                    return [example, ...newDateRows, ...normalizedExtraRows];
+                    return [...newDateRows, ...normalizedExtraRows];
                 });
             }
         } catch (error) {
@@ -354,7 +323,7 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
         const row = rowsRef.current[rowIndex];
         if (!row) return;
 
-        const dateStr = row[0].split('(')[0];
+        const dateStr = cleanDateString(row[0]);
         const startTime = row[1];
         const endTime = row[2];
         const note = row[3];
@@ -453,8 +422,9 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
     };
 
     const handleCellChange = (rowIndex: number, colIndex: number, value: string) => {
-        // Allow editing row 0 IF it is a custom column
-        if (rowIndex === 0 && colIndex < INITIAL_COLUMNS.length) return;
+        // Allow editing row 0 IF it is a custom column -- REMOVED BUGGY CHECK
+        // if (rowIndex === 0 && colIndex < INITIAL_COLUMNS.length) return; -- This was preventing editing result row 0
+
         if (colIndex === 4) return; // Block Status Edit
 
         const newRows = [...rows];
@@ -465,11 +435,10 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
 
         const row = newRows[rowIndex];
 
-        // Save if it's the example row OR a non-date row
-        const isExampleRow = rowIndex === 0;
+        // Save if it's a non-date row
         const isDateRow = /^\d{4}-\d{2}-\d{2}/.test(row[0]);
 
-        if (isExampleRow || !isDateRow) {
+        if (!isDateRow) {
             saveTableConfig(columns, newRows);
         }
     };
@@ -490,7 +459,7 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
         let foundDate = false;
 
         for (let i = rows.length - 1; i >= 0; i--) {
-            const dateStr = rows[i][0].split('(')[0];
+            const dateStr = cleanDateString(rows[i][0]);
             if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
                 lastDateObj = new Date(dateStr);
                 foundDate = true;
@@ -505,7 +474,7 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
             lastDateObj.setDate(lastDateObj.getDate() + 1);
 
             // Format: YYYY-MM-DD(Day)
-            const nextDateStr = formatDate(lastDateObj);
+            const nextDateStr = formatDateWithDay(lastDateObj);
 
             const newRow = new Array(columns.length).fill('');
             newRow[0] = nextDateStr; // Pre-fill Date Column
@@ -519,11 +488,10 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
     };
 
     const deleteRow = async (rowIndex: number) => {
-        if (rowIndex === 0) return;
 
         // Get the date string of the row being deleted to clear data
         const row = rows[rowIndex];
-        const dateStr = row[0].split('(')[0];
+        const dateStr = cleanDateString(row[0]);
 
         // 1. Clear Local/Server Persistence for this date
         removeLocalDraft(dateStr);
@@ -570,7 +538,7 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
 
     const checkAttendance = async () => {
         const today = new Date();
-        const todayStr = formatDate(today);
+        const todayStr = formatDateWithDay(today);
         const todayRowIndex = rows.findIndex(row => row[0] === todayStr);
 
         if (todayRowIndex === -1) {
@@ -611,7 +579,7 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
                 setRewardData({ streak: data.streak, addedXP: data.addedXP });
                 setShowRewardModal(true);
                 setCurrentStreak(data.streak);
-                removeLocalDraft(todayStr.split('(')[0]);
+                removeLocalDraft(cleanDateString(todayStr));
                 if (onCheckInComplete && data.newTotalXP) onCheckInComplete(data.newTotalXP);
                 fetchData();
             }
@@ -738,9 +706,8 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
                             </thead>
                             <tbody>
                                 {rows.map((row, rowIndex) => {
-                                    const isExample = rowIndex === 0;
                                     return (
-                                        <tr key={rowIndex} style={{ borderBottom: '1px solid #27272a', backgroundColor: isExample ? '#27272a50' : 'transparent' }}>
+                                        <tr key={rowIndex} style={{ borderBottom: '1px solid #27272a', backgroundColor: 'transparent' }}>
                                             {row.map((cell, colIndex) => {
                                                 const isFirstCol = colIndex === 0;
                                                 return (
@@ -752,7 +719,7 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
                                                             borderBottom: '1px solid #27272a', /* Row Line */
                                                             backgroundColor: isFirstCol
                                                                 ? '#18181b' /* Default BG for Sticky Col */
-                                                                : (colIndex === 4 && !isExample ? 'rgba(52, 211, 153, 0.05)' : 'transparent'),
+                                                                : 'transparent',
                                                             position: isFirstCol ? 'sticky' : 'static',
                                                             left: isFirstCol ? 0 : 'auto',
                                                             zIndex: isFirstCol ? 10 : 1
@@ -763,18 +730,18 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
                                                             value={cell}
                                                             onChange={(e) => handleCellChange(rowIndex, colIndex, e.target.value)}
                                                             onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-                                                            readOnly={(rowIndex === 0 && colIndex < INITIAL_COLUMNS.length) || colIndex === 4}
-                                                            onBlur={() => { if (rowIndex !== 0) saveDraft(rowIndex); }}
+                                                            readOnly={colIndex === 4}
+                                                            onBlur={() => { saveDraft(rowIndex); }}
                                                             style={{
                                                                 width: '100%',
                                                                 padding: '12px',
                                                                 background: 'transparent',
                                                                 border: 'none',
-                                                                color: isExample ? '#71717a' : colIndex === 4 ? '#34d399' : '#d4d4d8',
+                                                                color: colIndex === 4 ? '#34d399' : '#d4d4d8',
                                                                 textAlign: 'center',
                                                                 outline: 'none',
-                                                                fontStyle: (rowIndex === 0 && colIndex < INITIAL_COLUMNS.length) ? 'italic' : 'normal',
-                                                                cursor: (rowIndex === 0 && colIndex < INITIAL_COLUMNS.length) || colIndex === 4 ? 'default' : 'text'
+                                                                fontStyle: 'normal',
+                                                                cursor: colIndex === 4 ? 'default' : 'text'
                                                             }}
                                                             placeholder={'-'}
                                                         />
@@ -788,9 +755,7 @@ export default function AttendanceSection({ streak: initialStreak, startDate, en
                                                 borderLeft: '1px solid #3f3f46',
                                                 borderBottom: '1px solid #27272a'
                                             }}>
-                                                {!isExample && (
-                                                    <button onClick={(e) => toggleMenu('row', rowIndex, e)} style={{ width: '100%', height: '100%', background: 'transparent', border: 'none', color: '#71717a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FiMoreVertical size={16} /></button>
-                                                )}
+                                                <button onClick={(e) => toggleMenu('row', rowIndex, e)} style={{ width: '100%', height: '100%', background: 'transparent', border: 'none', color: '#71717a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FiMoreVertical size={16} /></button>
                                             </td>
                                         </tr>
                                     );

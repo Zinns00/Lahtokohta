@@ -19,15 +19,18 @@ export interface LevelInfo {
     progress: number; // 0 to 100
 }
 
-export type WorkspaceTier =
-    | 'grandidierite'
-    | 'painite'
-    | 'red diamond'
-    | 'diamond'
-    | 'platinum'
-    | 'gold'
-    | 'silver'
-    | 'bronze';
+export const WORKSPACE_TIERS = {
+    GRANDIDIERITE: 'grandidierite',
+    PAINITE: 'painite',
+    RED_DIAMOND: 'red diamond',
+    DIAMOND: 'diamond',
+    PLATINUM: 'platinum',
+    GOLD: 'gold',
+    SILVER: 'silver',
+    BRONZE: 'bronze'
+} as const;
+
+export type WorkspaceTier = typeof WORKSPACE_TIERS[keyof typeof WORKSPACE_TIERS];
 
 // ==========================================
 // Configuration Constants
@@ -52,15 +55,26 @@ const TITLE_THRESHOLDS: { minLevel: number; title: UserTitle; badge: string }[] 
 ];
 
 export const TIER_THRESHOLDS: { tier: WorkspaceTier; minLevel: number }[] = [
-    { tier: 'grandidierite', minLevel: 120 },
-    { tier: 'painite', minLevel: 100 },
-    { tier: 'red diamond', minLevel: 90 },
-    { tier: 'diamond', minLevel: 80 },
-    { tier: 'platinum', minLevel: 50 },
-    { tier: 'gold', minLevel: 30 },
-    { tier: 'silver', minLevel: 10 },
-    { tier: 'bronze', minLevel: 0 },
+    { tier: WORKSPACE_TIERS.GRANDIDIERITE, minLevel: 120 },
+    { tier: WORKSPACE_TIERS.PAINITE, minLevel: 100 },
+    { tier: WORKSPACE_TIERS.RED_DIAMOND, minLevel: 90 },
+    { tier: WORKSPACE_TIERS.DIAMOND, minLevel: 80 },
+    { tier: WORKSPACE_TIERS.PLATINUM, minLevel: 50 },
+    { tier: WORKSPACE_TIERS.GOLD, minLevel: 30 },
+    { tier: WORKSPACE_TIERS.SILVER, minLevel: 10 },
+    { tier: WORKSPACE_TIERS.BRONZE, minLevel: 0 },
 ];
+
+export const USER_FRAMES = [
+    { id: 'Default', label: '기본', minLevel: 0 },
+    { id: 'Explorer', label: '탐험가', minLevel: 1 },
+    { id: 'Pioneer', label: '개척자', minLevel: 20 },
+    { id: 'Navigator', label: '항해사', minLevel: 40 },
+    { id: 'Conqueror', label: '정복자', minLevel: 60 },
+    { id: 'Master', label: '마스터', minLevel: 80 },
+    { id: 'Transcendent', label: '초월자', minLevel: 90 },
+    { id: 'Absolute', label: '절대자', minLevel: 100 },
+] as const;
 
 // ==========================================
 // Core Logic

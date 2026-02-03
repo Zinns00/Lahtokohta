@@ -10,9 +10,10 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import AttendanceRewardModal from '@/components/AttendanceRewardModal';
 
+import { WORKSPACE_DIFFICULTIES, WorkspaceDifficulty, CURRICULUM_CONTENT_TYPES } from '@/constants/workspace';
+
 // --- Types ---
 type Tab = 'CURRICULUM' | 'PERSONAL';
-type Difficulty = 'EASY' | 'NORMAL' | 'HARD';
 type ContentType = 'VOD' | 'CODE' | 'TASK' | 'CONCEPT' | 'SETUP';
 
 interface CurriculumContent {
@@ -20,7 +21,7 @@ interface CurriculumContent {
     title: string;
     description?: string;
     type: string;
-    difficulty: Difficulty;
+    difficulty: WorkspaceDifficulty;
     isDone: boolean;
 }
 
@@ -38,7 +39,7 @@ interface PersonalPost {
     id: number;
     title: string;
     content: string;
-    difficulty: Difficulty;
+    difficulty: WorkspaceDifficulty;
     tags: string[];
     createdAt: string;
     isDone: boolean;
@@ -71,7 +72,7 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
     const [newContentTitle, setNewContentTitle] = useState('');
     const [newContentDesc, setNewContentDesc] = useState('');
     // const [newContentType, setNewContentType] = useState<string>('VOD'); // Removed
-    const [newContentDifficulty, setNewContentDifficulty] = useState<Difficulty>('NORMAL');
+    const [newContentDifficulty, setNewContentDifficulty] = useState<WorkspaceDifficulty>('Normal');
 
     // Form State (Chapter)
     const [newChapterTitle, setNewChapterTitle] = useState('');
@@ -82,7 +83,7 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
     const [newPersonalContent, setNewPersonalContent] = useState('');
     const [newPersonalCategoryInput, setNewPersonalCategoryInput] = useState('');
     const [newPersonalTags, setNewPersonalTags] = useState<string[]>([]);
-    const [newPersonalDifficulty, setNewPersonalDifficulty] = useState<Difficulty>('NORMAL');
+    const [newPersonalDifficulty, setNewPersonalDifficulty] = useState<WorkspaceDifficulty>('Normal');
 
     // UI State for Modal
     const [selectedPost, setSelectedPost] = useState<PersonalPost | null>(null);
@@ -90,12 +91,12 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
 
     // Edit State
     const [editingChapter, setEditingChapter] = useState<{ id: number; title: string; week: string } | null>(null);
-    const [editingContent, setEditingContent] = useState<{ id: number; title: string; desc: string; difficulty: Difficulty } | null>(null);
+    const [editingContent, setEditingContent] = useState<{ id: number; title: string; desc: string; difficulty: WorkspaceDifficulty } | null>(null);
     const [openChapterMenu, setOpenChapterMenu] = useState<number | null>(null);
     const [openContentMenu, setOpenContentMenu] = useState(false);
     const [openPersonalMenu, setOpenPersonalMenu] = useState(false);
     const [openPersonalItemMenu, setOpenPersonalItemMenu] = useState<number | null>(null);
-    const [editingPersonalPost, setEditingPersonalPost] = useState<{ id: number; title: string; content: string; difficulty: Difficulty; tags: string[] } | null>(null);
+    const [editingPersonalPost, setEditingPersonalPost] = useState<{ id: number; title: string; content: string; difficulty: WorkspaceDifficulty; tags: string[] } | null>(null);
     const [deletingPersonalPost, setDeletingPersonalPost] = useState<number | null>(null);
     const [deletingContentId, setDeletingContentId] = useState<number | null>(null);
 
@@ -126,7 +127,7 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                     id: t.id,
                     title: t.title || t.content,
                     content: t.content,
-                    difficulty: (t.difficulty || 'NORMAL') as Difficulty,
+                    difficulty: (t.difficulty || 'Normal') as WorkspaceDifficulty,
                     tags: t.tags || [],
                     createdAt: new Date(t.createdAt).toLocaleDateString(),
                     isDone: t.isDone
@@ -152,7 +153,7 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                 id: t.id,
                 title: t.content,
                 content: '개인 학습 목표입니다.',
-                difficulty: (t.priority === 'HIGH' ? 'HARD' : t.priority === 'LOW' ? 'EASY' : 'NORMAL') as Difficulty,
+                difficulty: (t.priority === 'HIGH' ? 'Hard' : t.priority === 'LOW' ? 'Easy' : 'Normal') as WorkspaceDifficulty,
                 tags: ['Personal'],
                 createdAt: new Date(t.createdAt || Date.now()).toLocaleDateString(),
                 isDone: t.isDone
@@ -192,11 +193,11 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
         return <FiFileText />;
     };
 
-    const getDifficultyColor = (diff: Difficulty) => {
+    const getDifficultyColor = (diff: WorkspaceDifficulty) => {
         switch (diff) {
-            case 'EASY': return '#34d399';
-            case 'NORMAL': return '#60a5fa';
-            case 'HARD': return '#f87171';
+            case 'Easy': return '#34d399';
+            case 'Normal': return '#60a5fa';
+            case 'Hard': return '#f87171';
             default: return '#9ca3af';
         }
     };
@@ -344,7 +345,7 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                 body: JSON.stringify({
                     title: newContentTitle,
                     description: newContentDesc,
-                    type: 'LESSON', // Hardcoded generic type
+                    type: CURRICULUM_CONTENT_TYPES[0].val, // Default to LESSON
                     difficulty: newContentDifficulty
                 })
             });
@@ -360,7 +361,7 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                 setNewContentTitle('');
                 setNewContentDesc('');
                 setAddingContentToChapter(null);
-                setNewContentDifficulty('NORMAL');
+                setNewContentDifficulty('Normal');
             }
         } catch (e) {
             console.error(e);
@@ -469,7 +470,7 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                     id: newTask.id,
                     title: newTask.title || newTask.content,
                     content: newTask.content, // Simplified for now
-                    difficulty: (newTask.difficulty || 'NORMAL') as Difficulty,
+                    difficulty: (newTask.difficulty || 'Normal') as WorkspaceDifficulty,
                     tags: newTask.tags || [],
                     createdAt: new Date(newTask.createdAt).toLocaleDateString(),
                     isDone: newTask.isDone
@@ -480,7 +481,7 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                 setNewPersonalContent('');
                 setNewPersonalCategoryInput('');
                 setNewPersonalTags([]);
-                setNewPersonalDifficulty('NORMAL');
+                setNewPersonalDifficulty('Normal');
                 setIsCreatingPersonal(false);
             }
         } catch (e) {
@@ -508,8 +509,8 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
 
                 if (result.task.isDone) {
                     let xp = 100;
-                    if (post.difficulty === 'EASY') xp = 25;
-                    if (post.difficulty === 'HARD') xp = 250;
+                    if (post.difficulty === 'Easy') xp = 25;
+                    if (post.difficulty === 'Hard') xp = 250;
                     setRewardData({
                         streak: 1,
                         addedXP: xp
@@ -859,19 +860,19 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                                                                     />
                                                                 </div>
                                                                 <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
-                                                                    {(['EASY', 'NORMAL', 'HARD'] as Difficulty[]).map(diff => (
+                                                                    {WORKSPACE_DIFFICULTIES.map(diff => (
                                                                         <button
-                                                                            key={diff}
-                                                                            onClick={() => setNewContentDifficulty(diff)}
+                                                                            key={diff.val}
+                                                                            onClick={() => setNewContentDifficulty(diff.val)}
                                                                             style={{
                                                                                 padding: '6px 10px', borderRadius: '4px',
-                                                                                border: newContentDifficulty === diff ? `1px solid ${getDifficultyColor(diff)}` : '1px solid #3f3f46',
-                                                                                background: newContentDifficulty === diff ? `${getDifficultyColor(diff)}20` : 'transparent',
-                                                                                color: newContentDifficulty === diff ? getDifficultyColor(diff) : '#71717a',
+                                                                                border: newContentDifficulty === diff.val ? `1px solid ${getDifficultyColor(diff.val)}` : '1px solid #3f3f46',
+                                                                                background: newContentDifficulty === diff.val ? `${getDifficultyColor(diff.val)}20` : 'transparent',
+                                                                                color: newContentDifficulty === diff.val ? getDifficultyColor(diff.val) : '#71717a',
                                                                                 fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600
                                                                             }}
                                                                         >
-                                                                            {diff}
+                                                                            {diff.label}
                                                                         </button>
                                                                     ))}
                                                                 </div>
@@ -1135,20 +1136,20 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                                     <div style={{ flex: 1 }}>
                                         <label style={{ display: 'block', color: '#a1a1aa', fontSize: '0.8rem', marginBottom: '4px' }}>난이도 설정</label>
                                         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                            {(['EASY', 'NORMAL', 'HARD'] as Difficulty[]).map(diff => (
+                                            {WORKSPACE_DIFFICULTIES.map(diff => (
                                                 <button
-                                                    key={diff}
-                                                    onClick={() => setNewPersonalDifficulty(diff)}
+                                                    key={diff.val}
+                                                    onClick={() => setNewPersonalDifficulty(diff.val)}
                                                     style={{
                                                         padding: '10px 12px', borderRadius: '6px',
-                                                        border: newPersonalDifficulty === diff ? `1px solid ${getDifficultyColor(diff)}` : '1px solid #3f3f46',
-                                                        backgroundColor: newPersonalDifficulty === diff ? `${getDifficultyColor(diff)}20` : 'transparent',
-                                                        color: newPersonalDifficulty === diff ? getDifficultyColor(diff) : '#71717a',
+                                                        border: newPersonalDifficulty === diff.val ? `1px solid ${getDifficultyColor(diff.val)}` : '1px solid #3f3f46',
+                                                        backgroundColor: newPersonalDifficulty === diff.val ? `${getDifficultyColor(diff.val)}20` : 'transparent',
+                                                        color: newPersonalDifficulty === diff.val ? getDifficultyColor(diff.val) : '#71717a',
                                                         cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600,
                                                         transition: 'all 0.2s'
                                                     }}
                                                 >
-                                                    {diff}
+                                                    {diff.label}
                                                 </button>
                                             ))}
                                         </div>
@@ -1222,7 +1223,7 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                                                         id: selectedContent.id,
                                                         title: selectedContent.title,
                                                         desc: selectedContent.description || '',
-                                                        difficulty: selectedContent.difficulty as Difficulty
+                                                        difficulty: selectedContent.difficulty as WorkspaceDifficulty
                                                     });
                                                     setOpenContentMenu(false);
                                                 }}
@@ -1567,12 +1568,12 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                         />
                         <select
                             value={editingContent.difficulty}
-                            onChange={e => setEditingContent({ ...editingContent, difficulty: e.target.value as Difficulty })}
+                            onChange={e => setEditingContent({ ...editingContent, difficulty: e.target.value as WorkspaceDifficulty })}
                             style={{ width: '100%', padding: '10px', marginBottom: '20px', borderRadius: '8px', background: '#27272a', border: '1px solid #3f3f46', color: '#fff' }}
                         >
-                            <option value="EASY">EASY (10~150 XP)</option>
-                            <option value="NORMAL">NORMAL (150~450 XP)</option>
-                            <option value="HARD">HARD (450~1000 XP)</option>
+                            {WORKSPACE_DIFFICULTIES.map(diff => (
+                                <option key={diff.val} value={diff.val}>{diff.label}</option>
+                            ))}
                         </select>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                             <button onClick={() => setEditingContent(null)} style={{ padding: '8px 16px', borderRadius: '8px', background: '#3f3f46', color: '#fff', border: 'none', cursor: 'pointer' }}>취소</button>
@@ -1619,19 +1620,19 @@ export default function CurriculumSection({ workspaceId, tasks, onAddTask, onXPC
                                 <div style={{ flex: 1 }}>
                                     <label style={{ display: 'block', color: '#a1a1aa', fontSize: '0.8rem', marginBottom: '4px' }}>난이도</label>
                                     <div style={{ display: 'flex', gap: '8px' }}>
-                                        {(['EASY', 'NORMAL', 'HARD'] as Difficulty[]).map(diff => (
+                                        {WORKSPACE_DIFFICULTIES.map(diff => (
                                             <button
-                                                key={diff}
-                                                onClick={() => setEditingPersonalPost({ ...editingPersonalPost, difficulty: diff })}
+                                                key={diff.val}
+                                                onClick={() => setEditingPersonalPost({ ...editingPersonalPost, difficulty: diff.val })}
                                                 style={{
                                                     flex: 1, padding: '8px', borderRadius: '6px',
-                                                    border: editingPersonalPost.difficulty === diff ? `1px solid ${getDifficultyColor(diff)}` : '1px solid #3f3f46',
-                                                    background: editingPersonalPost.difficulty === diff ? `${getDifficultyColor(diff)}20` : 'transparent',
-                                                    color: editingPersonalPost.difficulty === diff ? getDifficultyColor(diff) : '#71717a',
+                                                    border: editingPersonalPost.difficulty === diff.val ? `1px solid ${getDifficultyColor(diff.val)}` : '1px solid #3f3f46',
+                                                    background: editingPersonalPost.difficulty === diff.val ? `${getDifficultyColor(diff.val)}20` : 'transparent',
+                                                    color: editingPersonalPost.difficulty === diff.val ? getDifficultyColor(diff.val) : '#71717a',
                                                     cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600
                                                 }}
                                             >
-                                                {diff}
+                                                {diff.label}
                                             </button>
                                         ))}
                                     </div>

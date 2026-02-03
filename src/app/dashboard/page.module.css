@@ -112,7 +112,7 @@
 }
 
 .greeting {
-    font-size: 2.5rem;
+    font-size: 1.8rem;
     font-weight: 800;
     color: #111;
     margin-bottom: 8px;
@@ -525,8 +525,8 @@
 
 .cardTitle {
     text-align: left;
-    font-family: 'Cinzel', serif;
-    /* Fantasy font fallback */
+    font-family: 'Pretendard', 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+    /* Clean Modern font */
     font-size: 1.25rem;
     font-weight: 700;
     color: #f1f5f9;

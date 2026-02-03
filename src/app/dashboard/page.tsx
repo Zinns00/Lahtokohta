@@ -8,17 +8,17 @@ import { useRouter } from 'next/navigation';
 import CreateWorkspaceModal from '@/components/CreateWorkspaceModal';
 import ProfileSettingsModal from '@/components/ProfileSettingsModal';
 import UserAvatar from '@/components/UserAvatar';
-import { getUserLevelInfo, getWorkspaceMaxXP, getWorkspaceTier, WorkspaceTier } from '@/lib/levelSystem';
+import { getUserLevelInfo, getWorkspaceMaxXP, getWorkspaceTier, WorkspaceTier, WORKSPACE_TIERS } from '@/lib/levelSystem';
 
 const TIER_STYLES: Record<WorkspaceTier, string> = {
-    'grandidierite': styles.cardGrandidierite,
-    'painite': styles.cardPainite,
-    'red diamond': styles.cardRedDiamond,
-    'diamond': styles.cardDiamond,
-    'platinum': styles.cardPlatinum,
-    'gold': styles.cardGold,
-    'silver': styles.cardSilver,
-    'bronze': styles.cardBronze
+    [WORKSPACE_TIERS.GRANDIDIERITE]: styles.cardGrandidierite,
+    [WORKSPACE_TIERS.PAINITE]: styles.cardPainite,
+    [WORKSPACE_TIERS.RED_DIAMOND]: styles.cardRedDiamond,
+    [WORKSPACE_TIERS.DIAMOND]: styles.cardDiamond,
+    [WORKSPACE_TIERS.PLATINUM]: styles.cardPlatinum,
+    [WORKSPACE_TIERS.GOLD]: styles.cardGold,
+    [WORKSPACE_TIERS.SILVER]: styles.cardSilver,
+    [WORKSPACE_TIERS.BRONZE]: styles.cardBronze
 };
 
 const containerVariants: Variants = {
