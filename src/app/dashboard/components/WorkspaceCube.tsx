@@ -100,10 +100,10 @@ export function WorkspaceCube({ workspace }: WorkspaceCubeProps) {
                 />
             </RoundedBox>
 
-            {/* 3. Inner Core Wireframe */}
+            {/* 3. Inner Core (Colored Block) */}
             <mesh>
-                <boxGeometry args={[0.6, 0.6, 0.6]} />
-                <meshBasicMaterial color={color} wireframe transparent opacity={0.3} />
+                <boxGeometry args={[0.4, 0.4, 0.4]} />
+                <meshStandardMaterial color={workspace.color} />
             </mesh>
 
             {/* 4. Floating Label (UI) */}

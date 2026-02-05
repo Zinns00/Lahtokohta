@@ -12,17 +12,17 @@ export function GridSystem({ onPointerMove }: GridSystemProps) {
 
     return (
         <group>
-            {/* Infinite Grid Helper */}
+            {/* Infinite Grid Helper - Light Mode */}
             <Grid
                 position={[0, -0.01, 0]}
                 args={[100, 100]} // Size
                 cellSize={1}
-                cellThickness={0.6}
-                cellColor="#6b7280"
+                cellThickness={0.5}
+                cellColor="#9CA3AF" // Darker Grey (Tailwind gray-400) - Visible on white
                 sectionSize={5}
-                sectionThickness={1}
-                sectionColor="#9ca3af"
-                fadeDistance={30}
+                sectionThickness={0.8}
+                sectionColor="#4B5563" // Even darker (gray-600)
+                fadeDistance={40}
                 infiniteGrid
             />
 
